@@ -6,3 +6,5 @@ Javascript
 Java
 # Libraries
 TBD
+# License
+Apache 2.0
