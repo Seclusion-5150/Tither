@@ -1,0 +1,4 @@
+# pre-commit.sh
+# run py-lint and typecheck only on files that were changed in this commit
+git diff --cached --name-only | grep '.py$' | xargs -t poetry run pylint -j 0 --reports=no
+git diff --cached --name-only | grep '.py$' | xargs -t poetry run mypy --ignore-missing-imports

@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "streamlit-boilerplate"
+version = "0.1.0"
+description = "Streamlit + Poetry + Docker boilerplate"
+authors = ["You <you@example.com>"]
+readme = "README.md"
+packages = [{ include = "app" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+streamlit = "^1.37.0"
+
+[tool.poetry.group.dev.dependencies]
+# Add dev tools if you like, e.g. ruff/pytest
+# ruff = "^0.5.0"
+# pytest = "^8.2.0"
+pylint = "^3.3.8"
+mypy = "^1.17.1"
+
+[build-system]
+requires = ["poetry-core>=1.8.0"]
+build-backend = "poetry.core.masonry.api"

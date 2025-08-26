@@ -10,3 +10,5 @@ A mobile app that makes it easy for church members to pay their tithes to a chur
 - Other Packages TBD
 # License
 Apache-2.0 License
+
+# Streamlit + Poetry + Docker Boilerplate
