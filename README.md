@@ -77,6 +77,10 @@ Once successfully set up, your project will be ready for development with all ne
 
 For additional setup assistance or troubleshooting, refer to the [React Native documentation](https://reactnative.dev/docs/environment-setup) or create an issue in this repository.
 
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
 ---
 
 **Note**: This setup guide is specifically tailored for Windows development environments. Mac and Linux users should refer to the official React Native documentation for platform-specific instructions.
