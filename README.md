@@ -30,7 +30,7 @@ Note this path as you'll need it for environment variable configuration.
 
 ### 4. Locate Java SDK Path
 Find your Java SDK installation directory. The default location is typically:
-`C:\Program Files\Java\jdk-<insert-version-number-here>`
+`C:\Program Files\Java\jdk-17`
 
 ### 5. Configure Environment Variables
 Add the following environment variables to your system:
@@ -44,10 +44,12 @@ Add these directories to your system PATH:
 - `%ANDROID_HOME%\platform-tools`
 - `%ANDROID_HOME%\emulator`
 
-### 6. Create and Initialize Project
-Navigate to your desired project directory and run:
-`npx react-native@latest init ChurchTithesApp`
-`cd ChurchTithesApp`
+### 6. Clone the Project
+Clone this repository to your local machine:
+`git clone https://github.com/Seclusion-5150/The-Hash-Slinging-Slasher-s-Senior-Project-Church-Tithes-App.git`
+
+Navigate to the project directory:
+`cd The-Hash-Slinging-Slasher-s-Senior-Project-Church-Tithes-App`
 
 ### 7. Install Dependencies
 Install the required React Native dependencies:
@@ -64,7 +66,9 @@ In a separate terminal window, launch the Android emulator and install the app:
 ## Important Notes
 
 - **First Build Time**: The initial build may take 10-30 minutes as it downloads and configures native dependencies
+- **Emulator**: Ensure an Android emulator is running before executing `npm run android`
 - **Troubleshooting**: If you encounter path-related errors, verify that all environment variables are correctly set and restart your terminal
+- **Git Required**: Make sure you have Git installed on your system to clone the repository
 
 ## Project Structure
 
@@ -76,4 +80,5 @@ For additional setup assistance or troubleshooting, refer to the [React Native d
 
 ---
 
+**Note**: This setup guide is specifically tailored for Windows development environments. Mac and Linux users should refer to the official React Native documentation for platform-specific instructions.
 **Note**: This setup guide is specifically tailored for Windows development environments. Mac and Linux users should refer to the official React Native documentation for platform-specific instructions.
