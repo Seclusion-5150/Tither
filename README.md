@@ -44,10 +44,12 @@ Add these directories to your system PATH:
 - `%ANDROID_HOME%\platform-tools`
 - `%ANDROID_HOME%\emulator`
 
-### 6. Create and Initialize Project
-Navigate to your desired project directory and run:
-`npx react-native@latest init ChurchTithesApp`
-`cd ChurchTithesApp`
+### 6. Clone the Project
+Clone this repository to your local machine:
+`git clone https://github.com/Seclusion-5150/The-Hash-Slinging-Slasher-s-Senior-Project-Church-Tithes-App.git`
+
+Navigate to the project directory:
+`cd The-Hash-Slinging-Slasher-s-Senior-Project-Church-Tithes-App`
 
 ### 7. Install Dependencies
 Install the required React Native dependencies:
@@ -65,6 +67,7 @@ In a separate terminal window, launch the Android emulator and install the app:
 
 - **First Build Time**: The initial build may take 10-30 minutes as it downloads and configures native dependencies
 - **Troubleshooting**: If you encounter path-related errors, verify that all environment variables are correctly set and restart your terminal
+- **Git Required**: Make sure you have Git installed on your system to clone the repository
 
 ## Project Structure
 
@@ -74,6 +77,11 @@ Once successfully set up, your project will be ready for development with all ne
 
 For additional setup assistance or troubleshooting, refer to the [React Native documentation](https://reactnative.dev/docs/environment-setup) or create an issue in this repository.
 
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
 ---
 
+**Note**: This setup guide is specifically tailored for Windows development environments. Mac and Linux users should refer to the official React Native documentation for platform-specific instructions.
 **Note**: This setup guide is specifically tailored for Windows development environments. Mac and Linux users should refer to the official React Native documentation for platform-specific instructions.
