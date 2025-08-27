@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
@@ -95,3 +96,17 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+=======
+# The Hash Slinging Slasher's Senior-Project: Church-Tithes-App
+A mobile app that makes it easy for church members to pay their tithes to a church of their choice. Similar to the Booksy app, this app allows users to find a church near them and pay their tithes digitally at their convenience from the palm of their hand. Contactless tithing. Can't make it to church this week? Users can send tithes anytime and anywhere without needing to physically be at church to give their tithe. This makes the process easier for the church member as well as the church itself in regards to collection of the funds. Users can send tithes in advance. Users can send tithes to multiple churches. The app has components of a directory which allows users to browse churches, read reviews, find their preferred church and make their next tithe.
+# Programming Languages
+- Python
+- Javascript
+- Java
+# Software Packages and Frameworks
+- React Native
+- Next.js
+- Other Packages TBD
+# License
+Apache-2.0 License
+>>>>>>> 62fd54c6d287bbcd9158e56e03b895fb931534f0
