@@ -66,7 +66,6 @@ In a separate terminal window, launch the Android emulator and install the app:
 ## Important Notes
 
 - **First Build Time**: The initial build may take 10-30 minutes as it downloads and configures native dependencies
-- **Emulator**: Ensure an Android emulator is running before executing `npm run android`
 - **Troubleshooting**: If you encounter path-related errors, verify that all environment variables are correctly set and restart your terminal
 - **Git Required**: Make sure you have Git installed on your system to clone the repository
 
