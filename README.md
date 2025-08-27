@@ -30,7 +30,7 @@ Note this path as you'll need it for environment variable configuration.
 
 ### 4. Locate Java SDK Path
 Find your Java SDK installation directory. The default location is typically:
-`C:\Program Files\Java\jdk-17`
+`C:\Program Files\Java\jdk-<insert-version-number-here>`
 
 ### 5. Configure Environment Variables
 Add the following environment variables to your system:
