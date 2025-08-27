@@ -8,101 +8,74 @@ A mobile app that makes it easy for church members to pay their tithes to a chur
 - Java
 # Software Packages and Frameworks
 - React Native
-# Getting Started
+# Church Tithes App - React Native Setup Guide
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+A comprehensive guide to set up the development environment for the Church Tithes mobile application.
 
-## Step 1: Start Metro
+## Prerequisites
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+Before getting started, ensure you have administrative access on your computer to install software and modify environment variables.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Installation Steps
 
-```sh
-# Using npm
-npm start
+### 1. Install Node.js
+Download and install Node.js from the [official Node.js website](https://nodejs.org/). Choose the LTS (Long Term Support) version for stability.
 
-# OR using Yarn
-yarn start
-```
+### 2. Install Android Studio
+Download and install [Android Studio](https://developer.android.com/studio) following the standard installation process. This provides access to the Android SDK and device emulator necessary for React Native development.
 
-## Step 2: Build and run your app
+### 3. Locate Android SDK Path
+After installation, open Android Studio and navigate to settings to find the Android SDK installation directory. The typical location is:
+`%USERPROFILE%\AppData\Local\Android\Sdk`
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Note this path as you'll need it for environment variable configuration.
 
-### Android
+### 4. Locate Java SDK Path
+Find your Java SDK installation directory. The default location is typically:
+`C:\Program Files\Java\jdk-<insert-version-number-here>`
 
-```sh
-# Using npm
-npm run android
+### 5. Configure Environment Variables
+Add the following environment variables to your system:
 
-# OR using Yarn
-yarn android
-```
+**System Variables:**
+- `ANDROID_HOME`: Set to your Android SDK absolute path
+- `JAVA_HOME`: Set to your Java SDK absolute path
 
-### iOS
+**Path Variable Additions:**
+Add these directories to your system PATH:
+- `%ANDROID_HOME%\platform-tools`
+- `%ANDROID_HOME%\emulator`
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+### 6. Create and Initialize Project
+Navigate to your desired project directory and run:
+`npx react-native@latest init ChurchTithesApp`
+`cd ChurchTithesApp`
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+### 7. Install Dependencies
+Install the required React Native dependencies:
+`npm install --save-dev @react-native-community/cli@latest`
+`npm install`
 
-```sh
-bundle install
-```
+### 8. Run the Application
+Start the Metro bundler:
+`npm start`
 
-Then, and every time you update your native dependencies, run:
+In a separate terminal window, launch the Android emulator and install the app:
+`npm run android`
 
-```sh
-bundle exec pod install
-```
+## Important Notes
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+- **First Build Time**: The initial build may take 10-30 minutes as it downloads and configures native dependencies
+- **Troubleshooting**: If you encounter path-related errors, verify that all environment variables are correctly set and restart your terminal
 
-```sh
-# Using npm
-npm run ios
+## Project Structure
 
-# OR using Yarn
-yarn ios
-```
+Once successfully set up, your project will be ready for development with all necessary React Native dependencies configured.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Support
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+For additional setup assistance or troubleshooting, refer to the [React Native documentation](https://reactnative.dev/docs/environment-setup) or create an issue in this repository.
 
-## Step 3: Modify your app
+---
 
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
-
-# License
-Apache-2.0 License
+**Note**: This setup guide is specifically tailored for Windows development environments. Mac and Linux users should refer to the official React Native documentation for platform-specific instructions.
