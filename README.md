@@ -6,7 +6,7 @@ A mobile app that makes it easy for church members to pay their tithes to a chur
 - node.js
 # Software Packages and Frameworks
 - React Native
-# Church Tithes App - React Native Setup Guide
+# Tither - React Native Setup Guide
 
 A comprehensive guide to set up the development environment for the Church Tithes mobile application.
 
