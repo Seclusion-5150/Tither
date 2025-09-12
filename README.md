@@ -46,10 +46,10 @@ Add these directories to your system PATH:
 
 ### 6. Clone the Project
 Clone this repository to your local machine:
-`git clone https://github.com/Seclusion-5150/The-Hash-Slinging-Slasher-s-Senior-Project-Church-Tithes-App.git`
+`git clone https://github.com/Seclusion-5150/Tither.git`
 
 Navigate to the project directory:
-`cd The-Hash-Slinging-Slasher-s-Senior-Project-Church-Tithes-App`
+`cd Tither`
 
 ### 7. Install Dependencies
 Install the required React Native dependencies:
