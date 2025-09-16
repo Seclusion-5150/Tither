@@ -50,5 +50,11 @@ const styles = StyleSheet.create(
 	fontSize: 16,
 	fontWeight: 'bold',
   },
-
+  titherLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 72,
+    position: 'absolute',
+  },
 }); 
