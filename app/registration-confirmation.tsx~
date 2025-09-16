@@ -38,6 +38,34 @@ export default function RegistrationConfirmationPage() {
   );
 }
 
+ const verifyRegistration = async () => {
+	
+	const { error: authError, data: authData } = await supabase.auth.signUp({
+  		email: email,
+  		password: password});
+	
+	if (authError) {
+		Alert.alert('Error', 'Failed to sign up');
+		return;
+	}
+		
+	const { error: userError, data: userData } = await supabase
+  	  .from("user")
+  	  .insert({
+    	  id: authData.user?.id,
+    	  username: username,
+   	  first_name: firstName,
+    	  middle_name: middleName,
+	  last_name: lastName,
+	  phone: phoneNumber,
+  	  });
+	
+	
+	if (userError) {
+		Alert.alert('Error', 'Failed to update user database');
+		return;
+	}
+ };
 
 
 

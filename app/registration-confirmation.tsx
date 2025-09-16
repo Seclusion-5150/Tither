@@ -38,10 +38,6 @@ export default function RegistrationConfirmationPage() {
   );
 }
 
- const verifyRegistration = async () => {
-	
- };
-
 
 
 
