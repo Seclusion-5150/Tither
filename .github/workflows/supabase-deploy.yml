@@ -1,0 +1,58 @@
+name: Deploy prod schema migrations
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "supabase/migrations/prod/**"
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      DB_HOST: db.${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
+      DB_NAME: postgres
+      DB_USER: github_migrator
+      DB_PASS: ${{ secrets.GITHUB_ACTION_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      # Guardrail: fail if a prod migration tries to touch non-prod schemas
+      - name: Validate migration files only target prod schema
+        run: |
+          set -e
+          # Allow comments and whitespace; flag obvious non-prod schema references.
+          if grep -RInE '\b(auth|storage|graphql_public|extensions|public)\.' supabase/migrations/prod || \
+             grep -RInE '\bALTER SCHEMA\b(?!\s+prod\b)' supabase/migrations/prod || \
+             grep -RInE '\bCREATE SCHEMA\b(?!\s+IF NOT EXISTS\s+prod\b)' supabase/migrations/prod ; then
+            echo "::error ::Detected references to non-prod schemas in prod migrations."
+            exit 1
+          fi
+
+      - name: Apply prod migrations (in order)
+        env:
+          PGPASSWORD: ${{ env.DB_PASS }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          FILES=(supabase/migrations/prod/V*__*.sql)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No migration files to apply."
+            exit 0
+          fi
+          for f in "${FILES[@]}"; do
+            echo "Applying $f"
+            psql "host=${DB_HOST} port=5432 dbname=${DB_NAME} user=${DB_USER} sslmode=require" \
+              -v ON_ERROR_STOP=1 \
+              -f "$f"
+          done
