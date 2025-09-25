@@ -23,7 +23,7 @@ SET row_security = off;
 -- Name: prod; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA prod;
+CREATE SCHEMA IF NOT EXISTS prod;
 
 
 --
