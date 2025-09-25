@@ -1,44 +1,35 @@
-import { register } from './';
 import { supabase } from '@/services/supabase';
-
 import { Alert } from 'react-native';
-
 import { useState } from 'react';
-import { TextInput } from 'react-native';
-import { Pressable, Text } from 'react-native';
+import { TextInput, Pressable, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');  
-  const [username, setUsername] = useState('');  
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   const goToRegister = () => {
     router.push('/register');
   };
 
   const handleLogin = async () => {
-    const { error: authError, data: authData } = 
-	    await supabase.auth.signInWithPassword({
-  	    email: email,
-  	    password: password});
-	  
-    if(authError) {  
-	    console.log('Error: ', authError);
-	    Alert.alert('Error', 'Login Error: Incorrect Username or Password'); 
-	    return;
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+
+    if (authError) {
+      console.log('Error: ', authError);
+      Alert.alert('Error', 'Login Error: Incorrect Email or Password');
+      return;
     }
-    router.push('./dashboard');
-  }
+    router.push('/dashboard');
+  };
 
   return (
     <ParallaxScrollView
@@ -48,36 +39,45 @@ export default function LoginScreen() {
           source={require('@/assets/images/Tither_Logo.png')}
           style={styles.titherLogo}
         />
-      }>
+      }
+    >
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome Back!</ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Username</ThemedText>
-     	<TextInput style={styles.input} value={email}
-       	onChangeText={setEmail} placeholder="Username"/>
-     	<TextInput style={styles.input} value={username}
-       	onChangeText={setUsername} placeholder="Username"
-	/> 
+        <ThemedText type="subtitle">Email</ThemedText>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Email"
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Password</ThemedText>	
-     	<TextInput style={styles.input} value={password}
-       	onChangeText={setPassword} placeholder="Password" 
-     	 />
+        <ThemedText type="subtitle">Password</ThemedText>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Password"
+          secureTextEntry
+        />
       </ThemedView>
       <ThemedView style={styles.buttonContainer}>
-      <Pressable 
-      	style={styles.loginButtons} 
-      	onPress={handleLogin}>
-      	onPress={() => console.log('Login pressed')}>
-      	<Text style={styles.loginButtonText}>Login</Text>
-      </Pressable>
-      <Pressable
-      	style={styles.loginButtons}
-	onPress={goToRegister}>
-      	<Text style={styles.loginButtonText}>Register</Text>
-      </Pressable>
+        <Pressable
+          style={styles.loginButtons}
+          onPress={handleLogin}
+        >
+          <Text style={styles.loginButtonText}>Login</Text>
+        </Pressable>
+        <Pressable
+          style={styles.loginButtons}
+          onPress={goToRegister}
+        >
+          <Text style={styles.loginButtonText}>Register</Text>
+        </Pressable>
       </ThemedView>
     </ParallaxScrollView>
   );
@@ -101,35 +101,33 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   input: {
-	borderWidth: 1,
-	borderColor: '#ddd',
-	borderRadius: 8,
-	padding: 12,
-	fontSize: 16,
-	backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
   },
   buttonContainer: {
-  	flexDirection: 'row',
-	justifyContent: 'space-between',
-	alignItems: 'center',
-	marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
   },
   loginButtons: {
-  	height: 44,
-	width: 100,
-	borderColor: '#000',
-	borderRadius: 8,
-	padding: 12,
-	backgroundColor: '#fff',
-	justifyContent: 'center',
-	alignItems: 'center',
+    height: 44,
+    width: 100,
+    borderColor: '#000',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginButtonText: {
-  	color: '#000',
-	fontSize: 16,
-	fontWeight: 'bold',
-	letterSpacing: 0.5,
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
-
 });
-
