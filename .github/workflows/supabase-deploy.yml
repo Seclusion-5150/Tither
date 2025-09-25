@@ -4,20 +4,25 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "supabase/migrations/**"
+      - "supabase/migrations/prod/**"
   workflow_dispatch: {}
+
+concurrency:
+  group: prod-migrations
+  cancel-in-progress: false
 
 jobs:
   deploy-prod:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     env:
-      DB_HOST: db.${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
-      DB_NAME: Tither
-      DB_USER: github_action
-      DB_PASS: ${{ secrets.SUPABASE_GITHUB_ROLE_PASSWORD }}
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}          # e.g., khyeerjgjzyffnurkval
+      DB_HOST: aws-1-us-east-2.pooler.supabase.com              # transaction pooler
+      DB_PORT: "6543"
+      DB_NAME: postgres                                         # Supabase default DB
+      DB_ROLE: github_action                                    # your role in Postgres
+      DB_PASS: ${{ secrets.SUPABASE_GITHUB_ROLE_PASSWORD }}     # create/store this secret
 
     steps:
       - name: Checkout
@@ -28,11 +33,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-      # Guardrail: fail if a prod migration tries to touch non-prod schemas
+      # Build pooled username: <role>.<project_ref>
+      - name: Build pooled username and URL
+        run: |
+          echo "DB_USER_POOLED=${DB_ROLE}.${PROJECT_REF}" >> "$GITHUB_ENV"
+          echo "DB_URL=postgresql://${DB_ROLE}.${PROJECT_REF}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" >> "$GITHUB_ENV"
+
+      # Guardrail: prod migrations must target the prod schema only
       - name: Validate migration files only target prod schema
         run: |
           set -e
-          # Allow comments and whitespace; flag obvious non-prod schema references.
           if grep -RInE '\b(auth|storage|graphql_public|extensions|public)\.' supabase/migrations/prod || \
              grep -RInE '\bALTER SCHEMA\b(?!\s+prod\b)' supabase/migrations/prod || \
              grep -RInE '\bCREATE SCHEMA\b(?!\s+IF NOT EXISTS\s+prod\b)' supabase/migrations/prod ; then
@@ -40,20 +50,18 @@ jobs:
             exit 1
           fi
 
-      - name: Apply prod migrations (in order)
-        env:
-          PGPASSWORD: Tither1234
+      - name: Apply prod migrations (single transaction per file)
         run: |
           set -euo pipefail
           shopt -s nullglob
-          FILES=(supabase/migrations/V*__*.sql)
+          FILES=(supabase/migrations/prod/V*__*.sql)
           if [ ${#FILES[@]} -eq 0 ]; then
             echo "No migration files to apply."
             exit 0
           fi
           for f in "${FILES[@]}"; do
             echo "Applying $f"
-            psql "host=${DB_HOST} port=5432 dbname=${DB_NAME} user=${DB_USER} sslmode=require" \
-              -v ON_ERROR_STOP=1 \
-              -f "$f"
+            # -v ON_ERROR_STOP=1: fail on first error in the file
+            # -1 : wrap the entire file in a single transaction
+            psql "${DB_URL}" -v ON_ERROR_STOP=1 -1 -f "$f"
           done
