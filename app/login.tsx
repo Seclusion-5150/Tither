@@ -28,7 +28,7 @@ export default function LoginScreen() {
       Alert.alert('Error', 'Login Error: Incorrect Email or Password');
       return;
     }
-    router.push('/dashboard');
+    router.push('./dashboard');
   };
 
   return (
