@@ -1,5 +1,11 @@
 import { register } from './';
+<<<<<<< HEAD
+import { supabase } from '@/services/supabase';
 
+import { Alert } from 'react-native';
+=======
+
+>>>>>>> main
 import { useState } from 'react';
 import { TextInput } from 'react-native';
 import { Pressable, Text } from 'react-native';
@@ -15,12 +21,27 @@ import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState('');  
   const [username, setUsername] = useState('');  
   const [password, setPassword] = useState('');
   
   const goToRegister = () => {
     router.push('/register');
   };
+
+  const handleLogin = async () => {
+    const { error: authError, data: authData } = 
+	    await supabase.auth.signInWithPassword({
+  	    email: email,
+  	    password: password});
+	  
+    if(authError) {  
+	    console.log('Error: ', authError);
+	    Alert.alert('Error', 'Login Error: Incorrect Username or Password'); 
+	    return;
+    }
+    router.push('./dashboard');
+  }
 
   return (
     <ParallaxScrollView
@@ -36,6 +57,8 @@ export default function LoginScreen() {
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Username</ThemedText>
+     	<TextInput style={styles.input} value={email}
+       	onChangeText={setEmail} placeholder="Username"
      	<TextInput style={styles.input} value={username}
        	onChangeText={setUsername} placeholder="Username"
 	/> 
@@ -49,6 +72,7 @@ export default function LoginScreen() {
       <ThemedView style={styles.buttonContainer}>
       <Pressable 
       	style={styles.loginButtons} 
+      	onPress={handleLogin}>
       	onPress={() => console.log('Login pressed')}>
       	<Text style={styles.loginButtonText}>Login</Text>
       </Pressable>

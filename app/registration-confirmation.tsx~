@@ -38,7 +38,13 @@ export default function RegistrationConfirmationPage() {
   );
 }
 
+<<<<<<< HEAD
+=======
+ const verifyRegistration = async () => {
+	
+ };
 
+>>>>>>> main
 
 
 

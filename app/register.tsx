@@ -1,24 +1,54 @@
+import { supabase } from '@/services/supabase';
 import { useState } from 'react';
-import { TextInput } from 'react-native';
-import { Pressable, Text } from 'react-native';
-import { router } from 'expo-router';
+import { TextInput , Pressable, Text , Platform, StyleSheet , Alert } from 'react-native';
+import { router , Link } from 'expo-router';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
 export default function RegistrationScreen() {
   	const [username, setUsername] = useState('');  
   	const [password, setPassword] = useState('');
   	const [email, setEmail] = useState('');
-	const [firstName, setFirstname] = useState('');
+	const [firstName, setFirstName] = useState('');
   	const [lastName, setLastName] = useState('');
 	const [middleName, setMiddleName] = useState('');
 	const [phoneNumber, setPhoneNumber] = useState('');
+	
+ 	const registerUser = async () => {
+	
+	  const { error: authError, data: authData } = await supabase.auth.signUp({
+  		email: email,
+  		password: password});
+	
+	  if (authError) {
+		Alert.alert('Error', 'Failed to sign up');
+		return;
+	  }
+		
+	  const { error: userError, data: userData } = await supabase
+  	    .from("user")
+  	    .insert({
+    	    id: authData.user?.id,
+    	    username: username,
+   	    first_name: firstName,
+    	    middle_name: middleName,
+	    last_name: lastName,
+	    phone: phoneNumber,
+  	    });
+	
+	
+	  if (userError) {
+		Alert.alert('Error', 'Failed to update user database');
+		console.log('Error: ', userError)
+		return;
+	  }
+	  Alert.alert('Success', 'Successfully Created Account!');
+	  router.push('./login');
+   	};
 	
   	const registerUser = () => {
   		router.push({
@@ -50,6 +80,38 @@ export default function RegistrationScreen() {
 		</ThemedView>
 		<ThemedView style={styles.labelContainer}>
 		  <ThemedText type="subtitle">Username</ThemedText>
+     		  <TextInput style={styles.input} value={username} 
+		  onChangeText={setUsername}/>
+		</ThemedView>
+		<ThemedView style={styles.labelContainer}>
+		  <ThemedText type="subtitle">Password</ThemedText>	
+     		  <TextInput style={styles.input} value={password}
+		  onChangeText={setPassword} />
+		</ThemedView>
+		<ThemedView style={styles.labelContainer}>
+		  <ThemedText type="subtitle">E-mail</ThemedText>
+     		  <TextInput style={styles.input} value={email} 
+		  onChangeText={setEmail}  />
+		</ThemedView>
+		<ThemedView style={styles.labelContainer}>
+		  <ThemedText type="subtitle">First Name</ThemedText>
+     		  <TextInput style={styles.input} value={firstName}
+		  onChangeText={setFirstName} />
+		</ThemedView>
+		  <ThemedView style={styles.labelContainer}>
+		  <ThemedText type="subtitle">Middle Name</ThemedText>
+     		  <TextInput style={styles.input} value={middleName}
+		  onChangeText={setMiddleName} />
+		</ThemedView>
+		<ThemedView style={styles.labelContainer}>
+		  <ThemedText type="subtitle">Last Name</ThemedText>
+     		  <TextInput style={styles.input} value={lastName}
+		  onChangeText={setLastName} />
+		</ThemedView>
+		<ThemedView style={styles.labelContainer}>
+		 <ThemedText type="subtitle">Phone Number</ThemedText>
+     		 <TextInput style={styles.input} value={phoneNumber}
+		 onChangeText={setPhoneNumber} />
      		  <TextInput style={styles.input} value={username} />
 		</ThemedView>
 		<ThemedView style={styles.labelContainer}>
@@ -107,11 +169,12 @@ const styles = StyleSheet.create({
   },
   input: {
 	borderWidth: 1,
-	borderColor: '#ddd',
+	borderColor: '#000',
 	borderRadius: 8,
 	padding: 12,
 	fontSize: 16,
 	backgroundColor: '#fff',
+	color: '#000',
   },
   registerButton: {
   	height: 44,
@@ -130,5 +193,6 @@ const styles = StyleSheet.create({
 	letterSpacing: 0.5,
   },
 });
+
 
 
