@@ -53,7 +53,7 @@ jobs:
           echo "Found ${#FILES[@]} files"
           for f in "${FILES[@]}"; do
             prev="$(psql "$DB_URL" -At -c \
-              "SELECT checksum FROM prod.__migrations WHERE file = '$f' LIMIT 1;")"
+              "SELECT file FROM prod.__migrations WHERE file = '$f' LIMIT 1;")"
             if [[ -n "$prev" ]]; then
               echo "✓ Skip $f (already applied)"
               continue
