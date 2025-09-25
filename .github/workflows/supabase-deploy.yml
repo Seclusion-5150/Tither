@@ -37,6 +37,14 @@ jobs:
           echo "DB_USER_POOLED=${DB_ROLE}.${PROJECT_REF}" >> "$GITHUB_ENV"
           echo "DB_URL=postgresql://${DB_ROLE}.${PROJECT_REF}:${DB_PASS}@aws-1-us-east-2.pooler.supabase.com:5432/postgres" >> "$GITHUB_ENV"
 
+      - name: Verify Migrations Table
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -c " \
+            CREATE TABLE IF NOT EXISTS prod.__migrations ( \
+              file text PRIMARY KEY, \
+              applied_at timestamptz NOT NULL DEFAULT now() \
+            );"
+
       - name: Apply prod migrations
         run: |
           set -euo pipefail
@@ -44,6 +52,14 @@ jobs:
           FILES=(supabase/migrations/V*__*.sql)
           echo "Found ${#FILES[@]} files"
           for f in "${FILES[@]}"; do
+            prev="$(psql "$DB_URL" -At -c \
+              "SELECT checksum FROM prod.__migrations WHERE file = '$f' LIMIT 1;")"
+            if [[ -n "$prev" ]]; then
+              echo "✓ Skip $f (already applied)"
+              continue
+            fi
             echo "Applying $f"
             psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -c \
+              "INSERT INTO prod.__migrations(file) VALUES ('$f');"
           done
