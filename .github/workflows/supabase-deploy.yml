@@ -16,7 +16,7 @@ jobs:
       DB_HOST: db.${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
       DB_NAME: postgres
       DB_USER: github_action
-      DB_PASS: ${{ secrets.GITHUB_ACTION_PASSWORD }}
+      DB_PASS: ${{ secrets.SUPABASE_GITHUB_ROLE_PASSWORD }}
 
     steps:
       - name: Checkout
