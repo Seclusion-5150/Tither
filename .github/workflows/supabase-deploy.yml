@@ -15,7 +15,7 @@ jobs:
 
     env:
       DB_HOST: db.${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
-      DB_NAME: postgres
+      DB_NAME: Tither
       DB_USER: github_action
       DB_PASS: ${{ secrets.SUPABASE_GITHUB_ROLE_PASSWORD }}
 
@@ -42,7 +42,7 @@ jobs:
 
       - name: Apply prod migrations (in order)
         env:
-          PGPASSWORD: ${{ env.DB_PASS }}
+          PGPASSWORD: Tither1234
         run: |
           set -euo pipefail
           shopt -s nullglob
