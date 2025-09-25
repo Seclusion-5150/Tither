@@ -51,7 +51,8 @@ jobs:
           fi
           for f in "${FILES[@]}"; do
             echo "Applying $f"
-            # -v ON_ERROR_STOP=1: fail on first error in the file
-            # -1 : wrap the entire file in a single transaction
-            psql "${DB_URL}" -v ON_ERROR_STOP=1 -1 -f "$f"
+            for i in {1..6}; do
+              if psql "$DB_URL" -v ON_ERROR_STOP=1 -1 -f "$f"; then break; fi
+              echo "psql failed; retry $i/6 after backoff"; sleep $((2**i))
+            done
           done
