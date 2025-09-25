@@ -55,7 +55,7 @@ export default function LoginScreen() {
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Username</ThemedText>
      	<TextInput style={styles.input} value={email}
-       	onChangeText={setEmail} placeholder="Username"
+       	onChangeText={setEmail} placeholder="Username"/>
      	<TextInput style={styles.input} value={username}
        	onChangeText={setUsername} placeholder="Username"
 	/> 
