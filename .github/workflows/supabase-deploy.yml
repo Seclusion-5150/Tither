@@ -36,8 +36,7 @@ jobs:
       - name: Build pooled username and URL
         run: |
           echo "DB_USER_POOLED=${DB_ROLE}.${PROJECT_REF}" >> "$GITHUB_ENV"
-          echo "DB_URL=postgresql://${DB_ROLE}.${PROJECT_REF}:${DB_PASS}@aws-1-us-east-2.pooler.supabase.com:5432/postgres" >> "$GITHUB_ENV"
-
+          echo "DB_URL=postgresql://{DB_ROLE}.{PROJECT_REF}:{DB_PASS}@aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
 
       - name: Apply prod migrations (single transaction per file)
         run: |
@@ -50,8 +49,5 @@ jobs:
           fi
           for f in "${FILES[@]}"; do
             echo "Applying $f"
-            for i in {1..6}; do
-              if psql "$DB_URL" -v ON_ERROR_STOP=1 -1 -f "$f"; then break; fi
-              echo "psql failed; retry $i/6 after backoff"; sleep $((2**i))
-            done
+            if psql "$DB_URL" -v ON_ERROR_STOP=1 -1 -f "$f"; then break; fi
           done
