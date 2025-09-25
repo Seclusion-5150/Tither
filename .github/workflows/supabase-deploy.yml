@@ -36,7 +36,7 @@ jobs:
       - name: Build pooled username and URL
         run: |
           echo "DB_USER_POOLED=${DB_ROLE}.${PROJECT_REF}" >> "$GITHUB_ENV"
-          echo "DB_URL=postgresql://{DB_ROLE}.{PROJECT_REF}:{DB_PASS}@aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
+          echo "DB_URL=postgresql://github_action.khyeerjgjzyffnurkval:github1234@aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
 
       - name: Apply prod migrations (single transaction per file)
         run: |
