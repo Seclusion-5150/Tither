@@ -42,6 +42,8 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           FILES=(supabase/migrations/V*__*.sql)
-          echo "PWD=$(pwd)"
-          echo "Count: ${#FILES[@]}"
-          printf ' - %s\n' "${FILES[@]}"
+          echo "Found ${#FILES[@]} files"
+          for f in "${FILES[@]}"; do
+            echo "Applying $f"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 $TX_FLAG -f "$f"
+          done
