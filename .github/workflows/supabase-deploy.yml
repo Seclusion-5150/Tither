@@ -20,7 +20,6 @@ jobs:
       PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}          # e.g., khyeerjgjzyffnurkval
       DB_HOST: aws-1-us-east-2.pooler.supabase.com              # transaction pooler
       DB_PORT: "6543"
-      DB_NAME: Tither                                         # Supabase default DB
       DB_ROLE: github_action                                    # your role in Postgres
       DB_PASS: ${{ secrets.SUPABASE_GITHUB_ROLE_PASSWORD }}     # create/store this secret
 
@@ -37,7 +36,7 @@ jobs:
       - name: Build pooled username and URL
         run: |
           echo "DB_USER_POOLED=${DB_ROLE}.${PROJECT_REF}" >> "$GITHUB_ENV"
-          echo "DB_URL=postgresql://${DB_ROLE}.${PROJECT_REF}:${DB_PASS}@aws-1-us-east-2.pooler.supabase.com:5432/Tither" >> "$GITHUB_ENV"
+          echo "DB_URL=postgresql://${DB_ROLE}.${PROJECT_REF}:${DB_PASS}@aws-1-us-east-2.pooler.supabase.com:5432/postgres" >> "$GITHUB_ENV"
 
 
       - name: Apply prod migrations (single transaction per file)
