@@ -50,20 +50,6 @@ export default function RegistrationScreen() {
 	  router.push('./login');
    	};
 	
-  	const registerUser = () => {
-  		router.push({
-			pathname: './registration-confirmation',
-			params: {
-			  username: 	username,
-		  	  password: 	password,
-			  email:    	email,
-			  phoneNumber:  phoneNumber,
-		     	  firstName:    firstName,
-			  middleName: 	middleName,
-			  lastName:   	lastName  
-			}
-		});
-	};
 
 	return (
 		<ParallaxScrollView
@@ -112,31 +98,6 @@ export default function RegistrationScreen() {
 		 <ThemedText type="subtitle">Phone Number</ThemedText>
      		 <TextInput style={styles.input} value={phoneNumber}
 		 onChangeText={setPhoneNumber} />
-     		  <TextInput style={styles.input} value={username} />
-		</ThemedView>
-		<ThemedView style={styles.labelContainer}>
-		  <ThemedText type="subtitle">Password</ThemedText>	
-     		  <TextInput style={styles.input} value={password} />
-		</ThemedView>
-		<ThemedView style={styles.labelContainer}>
-		  <ThemedText type="subtitle">E-mail</ThemedText>
-     		  <TextInput style={styles.input} value={email} />
-		</ThemedView>
-		<ThemedView style={styles.labelContainer}>
-		  <ThemedText type="subtitle">First Name</ThemedText>
-     		  <TextInput style={styles.input} value={firstName} />
-		</ThemedView>
-		  <ThemedView style={styles.labelContainer}>
-		  <ThemedText type="subtitle">Middle Name</ThemedText>
-     		  <TextInput style={styles.input} value={middleName} />
-		</ThemedView>
-		<ThemedView style={styles.labelContainer}>
-		  <ThemedText type="subtitle">Last Name</ThemedText>
-     		  <TextInput style={styles.input} value={lastName} />
-		</ThemedView>
-		<ThemedView style={styles.labelContainer}>
-		 <ThemedText type="subtitle">Phone Number</ThemedText>
-     		 <TextInput style={styles.input} value={phoneNumber} />
 		</ThemedView>
 
       		<Pressable
