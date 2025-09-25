@@ -1,0 +1,53 @@
+name: Deploy prod schema migrations
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "supabase/migrations/**"
+  workflow_dispatch: {}
+
+concurrency:
+  group: prod-migrations
+  cancel-in-progress: false
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}          # e.g., khyeerjgjzyffnurkval
+      DB_HOST: aws-1-us-east-2.pooler.supabase.com              # transaction pooler
+      DB_PORT: "6543"
+      DB_ROLE: github_action                                    # your role in Postgres
+      DB_PASS: ${{ secrets.SUPABASE_GITHUB_ROLE_PASSWORD }}     # create/store this secret
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      # Build pooled username: <role>.<project_ref>
+      - name: Build pooled username and URL
+        run: |
+          echo "DB_USER_POOLED=${DB_ROLE}.${PROJECT_REF}" >> "$GITHUB_ENV"
+          echo "DB_URL=postgresql://github_action.${PROJECT_REF}:${DB_PASS}@aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
+
+      - name: Apply prod migrations (single transaction per file)
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          FILES=(supabase/migrations/V*__*.sql)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No migration files to apply."
+            exit 0
+          fi
+          for f in "${FILES[@]}"; do
+            echo "Applying $f"
+            if psql "$DB_URL" -v ON_ERROR_STOP=1 -1 -f "$f"; then break; fi
+          done
