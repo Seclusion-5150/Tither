@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "supabase/migrations/prod/**"
+      - "supabase/migrations/**"
   workflow_dispatch: {}
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          FILES=(supabase/migrations/prod/V*__*.sql)
+          FILES=(supabase/migrations/V*__*.sql)
           if [ ${#FILES[@]} -eq 0 ]; then
             echo "No migration files to apply."
             exit 0
