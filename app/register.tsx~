@@ -54,20 +54,6 @@ export default function RegistrationScreen() {
 	  router.push('./login');
    	};
 	
-  	const registerUser = () => {
-  		router.push({
-			pathname: './registration-confirmation',
-			params: {
-			  username: 	username,
-		  	  password: 	password,
-			  email:    	email,
-			  phoneNumber:  phoneNumber,
-		     	  firstName:    firstName,
-			  middleName: 	middleName,
-			  lastName:   	lastName  
-			}
-		});
-	};
 
 	return (
 		<ParallaxScrollView
@@ -178,6 +164,7 @@ const styles = StyleSheet.create({
 	padding: 12,
 	fontSize: 16,
 	backgroundColor: '#fff',
+	color: '#000',
   },
   registerButton: {
   	height: 44,

@@ -44,3 +44,6 @@ app-example
 
 # Ignore editor backup files
 *~
+#Ignore Packages
+package.json
+package-lock.json

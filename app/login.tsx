@@ -1,11 +1,8 @@
 import { register } from './';
-<<<<<<< HEAD
 import { supabase } from '@/services/supabase';
 
 import { Alert } from 'react-native';
-=======
 
->>>>>>> main
 import { useState } from 'react';
 import { TextInput } from 'react-native';
 import { Pressable, Text } from 'react-native';
@@ -59,8 +56,6 @@ export default function LoginScreen() {
         <ThemedText type="subtitle">Username</ThemedText>
      	<TextInput style={styles.input} value={email}
        	onChangeText={setEmail} placeholder="Username"
-     	<TextInput style={styles.input} value={username}
-       	onChangeText={setUsername} placeholder="Username"
 	/> 
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
@@ -73,7 +68,6 @@ export default function LoginScreen() {
       <Pressable 
       	style={styles.loginButtons} 
       	onPress={handleLogin}>
-      	onPress={() => console.log('Login pressed')}>
       	<Text style={styles.loginButtonText}>Login</Text>
       </Pressable>
       <Pressable
