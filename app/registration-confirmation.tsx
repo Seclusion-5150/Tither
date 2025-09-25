@@ -1,6 +1,5 @@
-import { router } from 'expo-router';
+import { router , useLocalSearchParams } from 'expo-router';
 
-import { useLocalSearchParams } from 'expo-router';
 import { View, Text, Alert } from 'react-native';
 import { useEffect, useState } from 'react';
 

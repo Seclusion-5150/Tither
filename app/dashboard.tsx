@@ -1,16 +1,11 @@
 import { supabase } from '@/services/supabase';
 import { useState } from 'react';
-import { TextInput } from 'react-native';
-import { Pressable, Text } from 'react-native';
-import { router } from 'expo-router';
+import { TextInput , Pressable, Text , Platform, StyleSheet , Alert , Dimensions } from 'react-native';
+import { router , Link } from 'expo-router';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-import { Alert } from 'react-native';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-import { Dimensions } from 'react-native';
 
 export default function RegistrationScreen() {
   
