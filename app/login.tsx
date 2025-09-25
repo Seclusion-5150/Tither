@@ -1,11 +1,8 @@
 import { register } from './';
-<<<<<<< HEAD
 import { supabase } from '@/services/supabase';
 
 import { Alert } from 'react-native';
-=======
 
->>>>>>> main
 import { useState } from 'react';
 import { TextInput } from 'react-native';
 import { Pressable, Text } from 'react-native';
