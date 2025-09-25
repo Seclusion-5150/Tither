@@ -20,7 +20,7 @@ jobs:
       PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}          # e.g., khyeerjgjzyffnurkval
       DB_HOST: aws-1-us-east-2.pooler.supabase.com              # transaction pooler
       DB_PORT: "6543"
-      DB_NAME: postgres                                         # Supabase default DB
+      DB_NAME: Tither                                         # Supabase default DB
       DB_ROLE: github_action                                    # your role in Postgres
       DB_PASS: ${{ secrets.SUPABASE_GITHUB_ROLE_PASSWORD }}     # create/store this secret
 
