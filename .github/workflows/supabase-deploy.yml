@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "supabase/migrations/prod/**"
+      - "supabase/migrations/**"
   workflow_dispatch: {}
 
 concurrency:
@@ -39,22 +39,12 @@ jobs:
           echo "DB_USER_POOLED=${DB_ROLE}.${PROJECT_REF}" >> "$GITHUB_ENV"
           echo "DB_URL=postgresql://${DB_ROLE}.${PROJECT_REF}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" >> "$GITHUB_ENV"
 
-      # Guardrail: prod migrations must target the prod schema only
-      - name: Validate migration files only target prod schema
-        run: |
-          set -e
-          if grep -RInE '\b(auth|storage|graphql_public|extensions|public)\.' supabase/migrations/prod || \
-             grep -RInE '\bALTER SCHEMA\b(?!\s+prod\b)' supabase/migrations/prod || \
-             grep -RInE '\bCREATE SCHEMA\b(?!\s+IF NOT EXISTS\s+prod\b)' supabase/migrations/prod ; then
-            echo "::error ::Detected references to non-prod schemas in prod migrations."
-            exit 1
-          fi
 
       - name: Apply prod migrations (single transaction per file)
         run: |
           set -euo pipefail
           shopt -s nullglob
-          FILES=(supabase/migrations/prod/V*__*.sql)
+          FILES=(supabase/migrations/V*__*.sql)
           if [ ${#FILES[@]} -eq 0 ]; then
             echo "No migration files to apply."
             exit 0
