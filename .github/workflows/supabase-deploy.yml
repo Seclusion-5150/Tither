@@ -42,4 +42,6 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           FILES=(supabase/migrations/V*__*.sql)
-          echo "$FILES"
+          echo "PWD=$(pwd)"
+          echo "Count: ${#FILES[@]}"
+          printf ' - %s\n' "${FILES[@]}"
