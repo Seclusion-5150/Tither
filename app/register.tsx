@@ -173,15 +173,12 @@ const styles = StyleSheet.create({
   },
   input: {
 	borderWidth: 1,
-<<<<<<< HEAD
 	borderColor: '#000',
-=======
-	borderColor: '#ddd',
->>>>>>> main
 	borderRadius: 8,
 	padding: 12,
 	fontSize: 16,
 	backgroundColor: '#fff',
+	color: '#000',
   },
   registerButton: {
   	height: 44,
@@ -202,8 +199,4 @@ const styles = StyleSheet.create({
 });
 
 
-<<<<<<< HEAD
 
-
-=======
->>>>>>> main
