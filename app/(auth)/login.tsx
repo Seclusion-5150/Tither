@@ -1,3 +1,4 @@
+import { register } from '..';
 import { supabase } from '@/services/supabase';
 import { Alert } from 'react-native';
 import { useState } from 'react';
@@ -28,8 +29,9 @@ export default function LoginScreen() {
       Alert.alert('Error', 'Login Error: Incorrect Email or Password');
       return;
     }
-    router.push('./dashboard');
-  };
+    router.replace('/(tabs)/dashboard');
+
+  }
 
   return (
     <ParallaxScrollView
