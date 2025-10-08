@@ -7,20 +7,21 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-export default function RegistrationScreen() {
+export default function churchDashboard() {
   
-  return (
-	
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
-        headerImage={
-        <Image
-          source={require('@/assets/images/Tither_Logo.png')}
-          style={styles.titherLogo}
-        />
-        }>
+  return ( 
+	<ParallaxScrollView	
+       	  contentContainerStyle={{ paddingBottom: 400 }}
+      	  headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
+	  headerImage={
+            <Image
+              source={require('@/assets/images/Tither_Logo.png')}
+              style={styles.titherLogo}
+            />
+	    }
+	  >
 	  <ThemedView style={styles.dashboardWidget}>
-		<ThemedText style={styles.dashboardWidgetText}>Welcome to your Dashboard!</ThemedText>
+		<ThemedText style={styles.dashboardWidgetText}>Welcome to your Church Dashboard!</ThemedText>
 	  </ThemedView>
       </ParallaxScrollView>	
 	

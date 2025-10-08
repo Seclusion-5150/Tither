@@ -2,6 +2,8 @@ import { supabase } from '@/services/supabase';
 import { router } from 'expo-router';
 import { Alert, Pressable, Text, StyleSheet } from 'react-native';
 import { ThemedView } from '@/components/themed-view';
+import { Image } from 'expo-image';  // Add this import
+import ParallaxScrollView from '@/components/parallax-scroll-view';
 
 export default function SettingsScreen() {
   const handleLogout = async () => {
@@ -15,7 +17,17 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    
+  <ParallaxScrollView
+      headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/Tither_Logo.png')}
+          style={styles.titherLogo}
+        />
+      }
+    >
+   <ThemedView style={styles.container}>
       <Text style={styles.title}>Settings</Text>
       <Text style={styles.bodyText}>Profile, preferences, and sign out live here.</Text>
 
@@ -23,6 +35,7 @@ export default function SettingsScreen() {
         <Text style={styles.logoutText}>Log Out</Text>
       </Pressable>
     </ThemedView>
+  </ParallaxScrollView>
   );
 }
 
@@ -40,5 +53,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: 'bold',
+  },
+
+  titherLogo: {  // Add this style
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 72,
+    position: 'absolute',
   },
 });
