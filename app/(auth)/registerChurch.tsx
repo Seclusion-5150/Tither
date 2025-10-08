@@ -10,16 +10,26 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { KeyboardAvoidingView, ScrollView } from 'react-native';
 
+function validateEINFormat(ein) {
+  // Remove any dashes
+  const cleanEIN = ein.replace(/-/g, '');
+  
+  // Check if it's 9 digits
+  if (!/^\d{9}$/.test(cleanEIN)) {
+    return false;
+  }
+  
+  return true;
+}
 export default function RegistrationScreen() {
   	const [username, setUsername] = useState('');  
   	const [password, setPassword] = useState('');
   	const [email, setEmail] = useState('');
-	const [firstName, setFirstName] = useState('');
-  	const [lastName, setLastName] = useState('');
-	const [middleName, setMiddleName] = useState('');
+	const [churchName, setChurchName] = useState('');
 	const [phoneNumber, setPhoneNumber] = useState('');
-	
- 	const registerUser = async () => {
+	const [ein, setEin] = useState('');
+ 	
+	const registerChurch = async () => {
 	
 	  const { error: authError, data: authData } = await supabase.auth.signUp({
   		email: email,
@@ -27,42 +37,47 @@ export default function RegistrationScreen() {
 	
 	  if (authError) {
 		Alert.alert('Error', 'Failed to sign up');
+		console.log("Error: ", authError)
 		return;
 	  }
-		
+
+	  if(!validateEINFormat(ein))
+	  {
+		  Alert.alert('Invalid EIN', 'EIN incorrectly Formatted. Try again.');
+		  return;
+	  }	  
 	  const { error: userError, data: userData } = await supabase
-  	    .from("user")
+  	    .from("church")
   	    .insert({
     	    id: authData.user?.id,
     	    username: username,
-   	    first_name: firstName,
-    	    middle_name: middleName,
-	    last_name: lastName,
+   	    ein: ein,
+    	    name: churchName,
+	    validated: false, 
 	    phone: phoneNumber,
   	    });
 	
 	
 	  if (userError) {
-		Alert.alert('Error', 'Failed to update user database');
+		Alert.alert('Error', 'Failed to update church database');
 		console.log('Error: ', userError)
 		return;
 	  }
-	  Alert.alert('Success', 'Successfully Created Account!');
+	  Alert.alert('Success', 'Successfully Created Church Account!');
 	  router.push('./login');
    	};
 	
 
 	return (
-
-    	<KeyboardAvoidingView
-      	  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      	  style={{ flex: 1 }}
-      	  keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    	>
+	<KeyboardAvoidingView
+	  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+	  style={{ flex: 1 }}
+	  keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+	  >
 		<ParallaxScrollView	
-        	  contentContainerStyle={{ paddingBottom: 400 }} // Add this!
-      		  headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
-		  headerImage={
+        	contentContainerStyle={{ paddingBottom: 400 }} // Add this!
+      		headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
+		headerImage={
         	<Image
           		source={require('@/assets/images/Tither_Logo.png')}
           		style={styles.titherLogo}
@@ -87,19 +102,14 @@ export default function RegistrationScreen() {
 		  onChangeText={setEmail}  />
 		</ThemedView>
 		<ThemedView style={styles.labelContainer}>
-		  <ThemedText type="subtitle">First Name</ThemedText>
-     		  <TextInput style={styles.input} value={firstName}
-		  onChangeText={setFirstName} />
+		  <ThemedText type="subtitle">Church Name</ThemedText>
+     		  <TextInput style={styles.input} value={churchName}
+		  onChangeText={setChurchName} />
 		</ThemedView>
 		  <ThemedView style={styles.labelContainer}>
-		  <ThemedText type="subtitle">Middle Name</ThemedText>
-     		  <TextInput style={styles.input} value={middleName}
-		  onChangeText={setMiddleName} />
-		</ThemedView>
-		<ThemedView style={styles.labelContainer}>
-		  <ThemedText type="subtitle">Last Name</ThemedText>
-     		  <TextInput style={styles.input} value={lastName}
-		  onChangeText={setLastName} />
+		  <ThemedText type="subtitle">EIN</ThemedText>
+     		  <TextInput style={styles.input} value={ein}
+		  onChangeText={setEin} />
 		</ThemedView>
 		<ThemedView style={styles.labelContainer}>
 		 <ThemedText type="subtitle">Phone Number</ThemedText>
@@ -109,11 +119,11 @@ export default function RegistrationScreen() {
 
       		<Pressable
       		  style={styles.registerButton}
-		  onPress={registerUser}>
+		  onPress={registerChurch}>
       		  <Text style={styles.loginButtonText}>Register Now</Text>
       		</Pressable>
-		</ParallaxScrollView>
-    	</KeyboardAvoidingView>
+		</ParallaxScrollView>	
+    </KeyboardAvoidingView>
 		);
 }
 

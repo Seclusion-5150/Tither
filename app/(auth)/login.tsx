@@ -19,7 +19,7 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
     });
@@ -29,9 +29,37 @@ export default function LoginScreen() {
       Alert.alert('Error', 'Login Error: Incorrect Email or Password');
       return;
     }
-    router.replace('/(tabs)/dashboard');
 
-  }
+    const userId = authData.user?.id;
+
+    const { data: churchData, error: churchError } = await supabase
+      .from('church')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (churchData) {
+      router.replace('/(tabs)/church');
+      return;
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('user')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (userData) {
+      router.replace('/(tabs)/user');
+      return;
+    }
+
+    Alert.alert('Error', 'Account profile not found');
+  };
+
+  const goToChurch = () => {
+  	router.push('/registerChurch');
+  };
 
   return (
     <ParallaxScrollView
@@ -74,13 +102,21 @@ export default function LoginScreen() {
         >
           <Text style={styles.loginButtonText}>Login</Text>
         </Pressable>
-        <Pressable
+       </ThemedView>
+       <ThemedView style={styles.registerButtonContainer}>
+	<Pressable
           style={styles.loginButtons}
           onPress={goToRegister}
         >
           <Text style={styles.loginButtonText}>Register</Text>
         </Pressable>
-      </ThemedView>
+	  <Pressable
+	    style={styles.loginButtons}
+	    onPress={goToChurch}
+	    >
+	      <Text style={styles.loginButtonText}>Register Church</Text>
+	    </Pressable>
+	</ThemedView>
     </ParallaxScrollView>
   );
 }
@@ -111,14 +147,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   buttonContainer: {
+    marginTop: 20,
+  },
+
+  registerButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 20,
+    gap: 12
   },
+
   loginButtons: {
     height: 44,
-    width: 100,
+    flex: 1,
     borderColor: '#000',
     borderRadius: 8,
     padding: 12,
