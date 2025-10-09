@@ -76,11 +76,22 @@ export default function TabsLayout() {
           title: 'Give',
           tabBarIcon: ({ color }) => <Feather name="credit-card" size={20} color={color} />,
         }}
-        
+        redirect={ accountType === 'church' }
       />
-      <Tabs.Screen name="give" options={{ title: 'Give' }}  />
-      <Tabs.Screen name="history" options={{ title: 'History' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color }) => <Feather name="clock" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <Feather name="user" size={20} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

@@ -39,7 +39,7 @@ export default function LoginScreen() {
       .single();
 
     if (churchData) {
-      router.replace('/(tabs)/church');
+      router.replace('/(tabs)/dashboard');
       return;
     }
 
@@ -50,7 +50,7 @@ export default function LoginScreen() {
       .single();
 
     if (userData) {
-      router.replace('/(tabs)/user');
+      router.replace('/(tabs)/dashboard');
       return;
     }
 
