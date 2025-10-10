@@ -1,14 +1,15 @@
-import { Tabs } from 'expo-router';
+import React from 'react';
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { Tabs } from 'expo-router';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { router } from 'expo-router';
 
 export default function TabsLayout() {
   const [checking, setChecking] = useState(true);
-
   const [accountType, setAccountType] = useState<string | null>(null);
-  
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getUser();
@@ -16,7 +17,7 @@ export default function TabsLayout() {
         router.replace('/(auth)/login');
         return;
       }
-      
+
       const userId = data.user.id;
       
       const { data: churchData } = await supabase
@@ -54,20 +55,56 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
-     <Tabs.Screen 
-      name="church" 
-      options={{ href: accountType === 'church' ? undefined : null }} 
-    />
-    
-     <Tabs.Screen 
-      name="user" 
-      options={{ href: accountType === 'user' ? undefined : null }} 
-    />
-
-    <Tabs.Screen name="give" options={{ title: 'Give', href: accountType === 'church' ? null : undefined }} />
-      <Tabs.Screen name="history" options={{ title: 'History' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: '#00a6ffff',
+        tabBarInactiveTintColor: '#6B7280',
+      }}
+    >
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color }) => <Feather name="home" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="give"
+        options={{
+          title: 'Give',
+          tabBarIcon: ({ color }) => <Feather name="credit-card" size={20} color={color} />,
+        }}
+        redirect={ accountType === 'church' }
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color }) => <Feather name="clock" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <Feather name="user" size={20} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    height: 80,
+    borderTopWidth: 0,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    justifyContent: 'center',
+  },
+});
