@@ -4,7 +4,7 @@
     "slug": "Tither",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/tither_icon.png",
     "scheme": "tither",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

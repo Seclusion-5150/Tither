@@ -66,7 +66,7 @@ export default function LoginScreen() {
       headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
       headerImage={
         <Image
-          source={require('@/assets/images/Tither_Logo.png')}
+          source={require('@/assets/images/tither_banner.png')}
           style={styles.titherLogo}
         />
       }
@@ -132,10 +132,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   titherLogo: {
-    height: 178,
-    width: 290,
+    height: 175,
+    width: '100%',
     bottom: 0,
-    left: 72,
+    left: 0,
     position: 'absolute',
   },
   input: {
