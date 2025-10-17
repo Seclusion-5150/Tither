@@ -1,33 +1,98 @@
-import { supabase } from '@/services/supabase';
-import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert, Dimensions, Pressable } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, Alert, Dimensions, Pressable, ActivityIndicator } from 'react-native';
 import { router, Link } from 'expo-router';
 import { Image } from 'expo-image';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import Card from '@/components/card';
-import Transaction from '@/components/transaction';
+// import ParallaxScrollView from '../../components/parallax-scroll-view'; // Not used in this file
+import { ThemedText } from '../../components/themed-text';
+import { ThemedView } from '../../components/themed-view';
+import Card from '../../components/card';
+import Transaction from '../../components/transaction';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import { supabase } from '../../services/supabase';
 
-type Transaction = {
-  id: string;
-  title: string;
-  date: string;
-  amount: string;
+type Tithe = {
+  id: number;
+  user_id: string;
+  church_id: string;
+  amount: number;
+  is_success: boolean;
+  datetime_created: string;
+  datetime_updated?: string;
 };
 
-const MOCK_TRANSACTIONS: Transaction[] = [
-  { id: '1', title: 'Monthly Tithe', date: 'Dec 15, 2024', amount: '$120' },
-  { id: '2', title: 'Special Offering', date: 'Dec 8, 2024', amount: '$120' },
-  { id: '3', title: 'Monthly Tithe', date: 'Nov 15, 2024', amount: '$120' },
-];
-
 export default function Dashboard() {
-  const thisMonth = '$240';
-  const thisYear = '$2,880';
-  const usualAmount = '$20';
+  const [tithes, setTithes] = useState<Tithe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Summary values
+  const [thisMonth, setThisMonth] = useState(0);
+  const [thisYear, setThisYear] = useState(0);
+  const [usualAmount, setUsualAmount] = useState(0);
+
+  useEffect(() => {
+    const fetchTithes = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          setError('Could not get user');
+          setLoading(false);
+          return;
+        }
+        const userId = user.id;
+
+        const { data, error: tithesError } = await supabase
+          .from('tithes')
+          .select('*')
+          .eq('user_id', userId)
+          .order('datetime_created', { ascending: false });
+
+        if (tithesError) {
+          setError('Could not fetch tithes');
+          setLoading(false);
+          return;
+        }
+
+        setTithes(data || []);
+
+        // Calculate summary values
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
+
+        let monthTotal = 0;
+        let yearTotal = 0;
+        let lastAmount = 0;
+
+        (data || []).forEach((tithe: Tithe) => {
+          const date = new Date(tithe.datetime_created);
+          if (date.getFullYear() === year) {
+            yearTotal += tithe.amount;
+            if (date.getMonth() === month) {
+              monthTotal += tithe.amount;
+            }
+          }
+        });
+
+        if (data && data.length > 0) {
+          lastAmount = data[0].amount;
+        }
+
+        setThisMonth(monthTotal);
+        setThisYear(yearTotal);
+        setUsualAmount(lastAmount);
+
+      } catch (e) {
+        setError('An unexpected error occurred');
+      }
+      setLoading(false);
+    };
+
+    fetchTithes();
+  }, []);
 
   return (
     <ThemedView style={styles.safe}>
@@ -44,7 +109,9 @@ export default function Dashboard() {
                 <Feather name="dollar-sign" size={28} color="#058b00ff" style={styles.summaryCardIcon} />
                 <View>
                   <ThemedText style={styles.summaryLabel}>This Month</ThemedText>
-                  <ThemedText style={styles.summaryValue}>{thisMonth}</ThemedText>
+                  <ThemedText style={styles.summaryValue}>
+                    {loading ? '...' : `$${thisMonth.toLocaleString()}`}
+                  </ThemedText>
                 </View>
               </View>
             </Card>
@@ -54,7 +121,9 @@ export default function Dashboard() {
                 <Feather name="calendar" size={28} color="#0172dbff" style={styles.summaryCardIcon} />
                 <View>
                   <ThemedText style={styles.summaryLabel}>This Year</ThemedText>
-                  <ThemedText style={styles.summaryValue}>{thisYear}</ThemedText>
+                  <ThemedText style={styles.summaryValue}>
+                    {loading ? '...' : `$${thisYear.toLocaleString()}`}
+                  </ThemedText>
                 </View>
               </View>
             </Card>
@@ -66,7 +135,9 @@ export default function Dashboard() {
                 <Feather name="heart" size={28} color="#ff0303ff" />
               </View>
               <View>
-                  <ThemedText style={styles.usualAmount}>Your usual amount: {usualAmount}</ThemedText>
+                <ThemedText style={styles.usualAmount}>
+                  Your usual amount: {loading ? '...' : `$${usualAmount}`}
+                </ThemedText>
               </View>
 
               <Pressable
@@ -87,8 +158,18 @@ export default function Dashboard() {
 
           <Card title="Recent Activity" style={styles.activityCard}>
             <View>
-              {MOCK_TRANSACTIONS.map((t) => (
-                <Transaction key={t.id} title={t.title} date={t.date} amount={t.amount} />
+              {loading && <ActivityIndicator size="small" color="#0369A1" />}
+              {error && <ThemedText style={{ color: 'red' }}>{error}</ThemedText>}
+              {!loading && !error && tithes.length === 0 && (
+                <ThemedText>No tithes found.</ThemedText>
+              )}
+              {!loading && !error && tithes.map((t) => (
+                <Transaction
+                  key={t.id}
+                  title="Tithe"
+                  date={new Date(t.datetime_created).toLocaleDateString()}
+                  amount={`$${t.amount}`}
+                />
               ))}
             </View>
           </Card>
