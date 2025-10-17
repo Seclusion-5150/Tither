@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS "user";
+DROP TABLE IF EXISTS "user" CASCADE;
 CREATE TABLE IF NOT EXISTS "user" (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid()
   username         TEXT UNIQUE NOT NULL,
@@ -20,7 +20,7 @@ COMMENT ON COLUMN "user".last_name IS 'User last name';
 COMMENT ON COLUMN "user".phone IS 'User phone number';
 COMMENT ON COLUMN "user".email IS 'User email';
 
-DROP TABLE IF EXISTS church;
+DROP TABLE IF EXISTS church CASCADE;
 CREATE TABLE IF NOT EXISTS church(
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid()
   ein              TEXT NOT NULL,
@@ -46,7 +46,7 @@ COMMENT ON COLUMN church.location_id IS 'location id that will map back to a loc
 COMMENT ON COLUMN church.admin_user_id IS 'A single main admin for the church, this admin can add or remove other admins';
 COMMENT ON COLUMN church.validated IS 'Default false once the church is validated this will be true';
 
-DROP TABLE IF EXISTS admin;
+DROP TABLE IF EXISTS admin CASCADE;
 CREATE TABLE IF NOT EXISTS admin(
   user_id          UUID NOT NULL REFERENCES "user"(id),
   church_id        UUID NOT NULL REFERENCES church(id),
