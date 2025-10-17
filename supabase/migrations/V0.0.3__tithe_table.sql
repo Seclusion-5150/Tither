@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS church(
   phone            TEXT,
   email            TEXT,
   location_id      BIGINT,
-  admin_user_id    BIGINT REFERENCES "user"(id),
+  admin_user_id    UUID REFERENCES "user"(id),
   validated        BOOLEAN DEFAULT FALSE,
   datetime_created TIMESTAMPTZ DEFAULT NOW(),
   datetime_updated TIMESTAMPTZ
