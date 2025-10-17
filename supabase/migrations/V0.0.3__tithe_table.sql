@@ -2,7 +2,7 @@ CREATE TYPE donation_type AS ENUM ('Offering','Tithe','Missions','Building Fund'
 
 CREATE TABLE IF NOT EXISTS tithes (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id          UUID NOT NULL REFERENCES users(id),
+  user_id          UUID NOT NULL REFERENCES "user"(id),
   church_id        UUID NOT NULL REFERENCES church(id),
   amount           NUMERIC(12,2) NOT NULL,
   type             donation_type NOT NULL,
