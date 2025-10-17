@@ -1,3 +1,5 @@
+DROP TYPE IF EXISTS donation_type;
+
 CREATE TYPE donation_type AS ENUM ('Offering','Tithe','Missions','Building Fund');
 
 CREATE TABLE IF NOT EXISTS tithes (
