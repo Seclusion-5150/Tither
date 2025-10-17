@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS "user" CASCADE;
 CREATE TABLE IF NOT EXISTS "user" (
-  id               UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username         TEXT UNIQUE NOT NULL,
   password         TEXT NOT NULL,
   first_name       TEXT NOT NULL,
@@ -22,7 +22,7 @@ COMMENT ON COLUMN "user".email IS 'User email';
 
 DROP TABLE IF EXISTS church CASCADE;
 CREATE TABLE IF NOT EXISTS church(
-  id               UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ein              TEXT NOT NULL,
   name             TEXT NOT NULL,
   address          TEXT,
