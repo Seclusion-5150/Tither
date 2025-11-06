@@ -4,9 +4,6 @@ export const runtime = 'nodejs';
 
 import { stripe } from '@/lib/server/stripe.server';
 
-// const key = 'sk_test_51SO2kDBKkTgjKlOsqohCY7OF905aCQXY3yNAugXeniVJUYR8YZsydLr4muK82VDxLWoxj1dAEM6UjLPhhTI949sS00sAytQvYx';
-// if (!key) throw new Error('STRIPE_SECRET_KEY is not set');
-// const stripe = new Stripe(key, { apiVersion: '2024-06-20' });
 
 // Permissive CORS for dev
 const corsHeaders = {
