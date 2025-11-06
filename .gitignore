@@ -47,3 +47,5 @@ app-example
 #Ignore Packages
 package.json
 package-lock.json
+# Next.js build output
+.next/
