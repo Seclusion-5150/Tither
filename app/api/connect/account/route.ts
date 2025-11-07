@@ -1,8 +1,8 @@
 // app/api/connect/account/route.ts
 // import 'server-only';
-export const runtime = 'nodejs';
+import { getStripe } from '@/lib/server/stripe.server';
 
-import { stripe } from '@/lib/server/stripe.server';
+export const runtime = 'nodejs';
 
 
 // Permissive CORS for dev
@@ -27,6 +27,9 @@ type Body = {
 export async function POST(req: Request) {
   try {
     const { accountId: maybeAccountId, refreshUrl, returnUrl } = (await req.json()) as Body;
+
+    // Lazily get the Stripe client when the route is invoked.
+    const stripe = getStripe();
 
     // 1) Create or reuse account
     const accountId =
