@@ -15,19 +15,54 @@ type HistoryItem = {
   status?: 'Completed' | 'Pending' | 'Failed';
   amount: string;
   note?: string;
+  churchName?: string;
 };
 
 const MOCK_HISTORY: HistoryItem[] = [
-  { id: '1', title: 'Monthly Tithe', date: 'Dec 15, 2024', method: 'Credit Card', status: 'Completed', amount: '$120', note: 'Faithful giving for December' },
-  { id: '2', title: 'Special Offering', date: 'Dec 5, 2024', method: 'Credit Card', status: 'Completed', amount: '$50', note: 'Christmas outreach program' },
-  { id: '3', title: 'Monthly Tithe', date: 'Nov 15, 2024', method: 'Credit Card', status: 'Completed', amount: '$120' },
-  { id: '4', title: 'Building Fund', date: 'Nov 5, 2024', method: 'Mobile Payment', status: 'Completed', amount: '$200', note: 'New sanctuary construction' },
-  { id: '5', title: 'Monthly Tithe', date: 'Oct 15, 2024', method: 'Credit Card', status: 'Completed', amount: '$120' },
-  { id: '6', title: 'Missions', date: 'Oct 1, 2024', method: 'Bank Transfer', status: 'Completed', amount: '$75', note: 'Supporting missionaries in Kenya' },
+  { id: '1', title: 'Tithe', date: 'Nov 01, 2025', method: 'Credit Card', status: 'Completed', amount: '$120', note: 'Faithful giving for December', churchName: 'Grace Community Church' },
+  { id: '2', title: 'Fundraiser', date: 'Oct 15, 2025', method: 'Mobile Payment', status: 'Completed', amount: '$200', note: 'New sanctuary construction', churchName: 'First Baptist Church' },
+  { id: '3', title: 'Missions', date: 'Jan 01, 2025', method: 'Bank Transfer', status: 'Completed', amount: '$75', note: 'Supporting missionaries in Kenya', churchName: 'New Life Fellowship' },
+  { id: '4', title: 'Offering', date: 'Dec 05, 2024', method: 'Credit Card', status: 'Completed', amount: '$50', note: 'Christmas outreach program', churchName: 'Grace Community Church' },
+  { id: '5', title: 'Tithe', date: 'Nov 15, 2024', method: 'Credit Card', status: 'Completed', amount: '$120', churchName: 'First Baptist Church' },
+  { id: '6', title: 'Tithe', date: 'Oct 15, 2024', method: 'Credit Card', status: 'Completed', amount: '$120', churchName: 'New Life Fellowship' },
 ];
 
-const TYPES = ['All', 'Tithe', 'Offering', 'Missions', 'Building Fund'] as const;
+const TYPES = ['All', 'Tithe', 'Offering', 'Mission', 'Fundraiser'] as const;
 const PERIODS = ['This Month', 'This Quarter', 'This Year', 'All Time'] as const;
+
+function parseDateString(dateStr: string): Date | null {
+  const iso = Date.parse(dateStr);
+  if (!Number.isNaN(iso)) return new Date(iso);
+  const d = new Date(dateStr);
+  if (!Number.isNaN(d.getTime())) return d;
+  try {
+    const normalized = dateStr.replace(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/, '$3-$1-$2');
+    const parsed = Date.parse(normalized);
+    if (!Number.isNaN(parsed)) return new Date(parsed);
+  } catch {}
+  return null;
+}
+
+function periodRange(period: typeof PERIODS[number]) {
+  const now = new Date();
+  if (period === 'This Month') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    return { start, end };
+  }
+  if (period === 'This Quarter') {
+    const q = Math.floor(now.getMonth() / 3);
+    const start = new Date(now.getFullYear(), q * 3, 1, 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), q * 3 + 3, 0, 23, 59, 59, 999);
+    return { start, end };
+  }
+  if (period === 'This Year') {
+    const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    return { start, end };
+  }
+  return null;
+}
 
 export default function History() {
   const [filterType, setFilterType] = useState<typeof TYPES[number]>('All');
@@ -36,10 +71,32 @@ export default function History() {
   const totalThisYear = '$685.00';
 
   const filtered = useMemo(() => {
-    if (filterType === 'All') return MOCK_HISTORY;
-    if (filterType === 'Tithe') return MOCK_HISTORY.filter((h) => h.title.includes('Tithe'));
-    return MOCK_HISTORY.filter((h) => h.title.includes(filterType));
-  }, [filterType]);
+    let list = MOCK_HISTORY.slice();
+
+    if (filterType !== 'All') {
+      const needle = filterType.toLowerCase();
+      list = list.filter((h) => (h.title || '').toLowerCase().includes(needle));
+    }
+
+    const range = periodRange(period);
+    if (range) {
+      const { start, end } = range;
+      list = list.filter((h) => {
+        const parsed = parseDateString(h.date);
+        if (!parsed) return false;
+        const t = parsed.getTime();
+        return t >= start.getTime() && t <= end.getTime();
+      });
+    }
+
+    list.sort((a, b) => {
+      const da = parseDateString(a.date)?.getTime() ?? 0;
+      const db = parseDateString(b.date)?.getTime() ?? 0;
+      return db - da;
+    });
+
+    return list;
+  }, [filterType, period]);
 
   const onDownload = () => {
     Alert.alert('Download', 'Payment history CSV will be prepared for download.');
@@ -59,7 +116,7 @@ export default function History() {
               <View>
                 <ThemedText style={styles.summaryLabel}>Total This Year</ThemedText>
                 <ThemedText style={styles.summaryValue}>{totalThisYear}</ThemedText>
-                <ThemedText style={styles.taxLabel}>Tax Year 2024</ThemedText>
+                <ThemedText style={styles.taxLabel}>Tax Year {new Date().getFullYear()}</ThemedText>
               </View>
 
               <Pressable
@@ -118,9 +175,14 @@ export default function History() {
 
           <Card title="Transactions" style={styles.card}>
             <View>
+              {filtered.length === 0 && <ThemedText style={{ marginBottom: 8 }}>No transactions found for the selected filters.</ThemedText>}
               {filtered.map((item) => (
                 <View key={item.id} style={styles.txWrap}>
-                  <Transaction title={item.title} date={item.date} amount={item.amount} />
+                  <Transaction
+                    title={`${item.title}${item.churchName ? ` • ${item.churchName}` : ''}`}
+                    date={item.date}
+                    amount={item.amount}
+                  />
                   {item.note ? <ThemedText style={styles.txNote}>{item.note}</ThemedText> : null}
                 </View>
               ))}
@@ -163,17 +225,17 @@ const styles = StyleSheet.create({
 
   filterGroup: { marginBottom: 12 },
   filterLabel: { fontSize: 13, color: '#6B7280', marginBottom: 8 },
-  chipsRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
 
   chip: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
     borderRadius: 10,
     backgroundColor: '#fff',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#E6E6E9',
-    marginRight: 8,
-    marginBottom: 8,
+    // marginRight: 4,
+    // marginBottom: 4,
   },
   chipActive: { backgroundColor: '#0369A1', borderColor: '#0369A1' },
   chipText: { color: '#0F172A', fontSize: 14 },
