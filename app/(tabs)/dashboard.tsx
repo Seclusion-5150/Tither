@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert, Dimensions, Pressable, ActivityIndicator } from 'react-native';
-import { router, Link } from 'expo-router';
-import { Image } from 'expo-image';
-// import ParallaxScrollView from '../../components/parallax-scroll-view'; // Not used in this file
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
 import Card from '../../components/card';
 import Transaction from '../../components/transaction';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
 
 type Tithe = {
@@ -18,7 +16,14 @@ type Tithe = {
   amount: number;
   is_success: boolean;
   datetime_created: string;
-  datetime_updated?: string;
+};
+
+type Church = {
+  id: string;
+  name?: string;
+  denomination?: string;
+  address?: string;
+  verified?: boolean;
 };
 
 export default function Dashboard() {
@@ -26,24 +31,59 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Summary values
   const [thisMonth, setThisMonth] = useState(0);
   const [thisYear, setThisYear] = useState(0);
   const [usualAmount, setUsualAmount] = useState(0);
 
+  // selected church
+  const [selectedChurch, setSelectedChurch] = useState<Church | null>(null);
+  const [churchLoading, setChurchLoading] = useState(true);
+
   useEffect(() => {
-    const fetchTithes = async () => {
+    let mounted = true;
+
+    const load = async () => {
       setLoading(true);
       setError(null);
+      setChurchLoading(true);
+
       try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          setError('Could not get user');
-          setLoading(false);
+        const { data: authData, error: authErr } = await supabase.auth.getUser();
+        const user = authData?.user;
+        if (authErr || !user) {
+          setError('Not authenticated');
           return;
         }
+
         const userId = user.id;
 
+        // read selected_church_id preference
+        try {
+          const { data: prefRow, error: prefError } = await supabase
+            .from('user_preferences')
+            .select('value')
+            .eq('user_id', userId)
+            .eq('key', 'selected_church_id')
+            .limit(1)
+            .single();
+
+          if (!prefError && prefRow?.value) {
+            const selectedId = String(prefRow.value);
+            const { data: churchData, error: churchError } = await supabase
+              .from('church')
+              .select('id,name,denomination,address,verified')
+              .eq('id', selectedId)
+              .single();
+
+            if (!churchError && churchData && mounted) {
+              setSelectedChurch(churchData as Church);
+            }
+          }
+        } catch {
+          // ignore preference read failure
+        }
+
+        // fetch tithes
         const { data, error: tithesError } = await supabase
           .from('tithes')
           .select('*')
@@ -52,47 +92,58 @@ export default function Dashboard() {
 
         if (tithesError) {
           setError('Could not fetch tithes');
-          setLoading(false);
           return;
         }
 
-        setTithes(data || []);
+        const list: Tithe[] = data || [];
+        if (mounted) setTithes(list);
 
-        // Calculate summary values
+        // compute summary
         const now = new Date();
         const month = now.getMonth();
         const year = now.getFullYear();
-
         let monthTotal = 0;
         let yearTotal = 0;
         let lastAmount = 0;
 
-        (data || []).forEach((tithe: Tithe) => {
-          const date = new Date(tithe.datetime_created);
-          if (date.getFullYear() === year) {
-            yearTotal += tithe.amount;
-            if (date.getMonth() === month) {
-              monthTotal += tithe.amount;
-            }
+        list.forEach((t) => {
+          const d = new Date(t.datetime_created);
+          if (d.getFullYear() === year) {
+            yearTotal += t.amount;
+            if (d.getMonth() === month) monthTotal += t.amount;
           }
         });
 
-        if (data && data.length > 0) {
-          lastAmount = data[0].amount;
+        if (list.length > 0) lastAmount = list[0].amount;
+
+        if (mounted) {
+          setThisMonth(monthTotal);
+          setThisYear(yearTotal);
+          setUsualAmount(lastAmount);
         }
-
-        setThisMonth(monthTotal);
-        setThisYear(yearTotal);
-        setUsualAmount(lastAmount);
-
       } catch (e) {
-        setError('An unexpected error occurred');
+        if (mounted) setError('Unexpected error');
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          setChurchLoading(false);
+        }
       }
-      setLoading(false);
     };
 
-    fetchTithes();
+    load();
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  const onChangeChurch = () => {
+    router.push('/(tabs)/find');
+  };
+
+  const onGive = () => {
+    router.push('/(tabs)/give');
+  };
 
   return (
     <ThemedView style={styles.safe}>
@@ -103,15 +154,49 @@ export default function Dashboard() {
             <ThemedText style={styles.welcomeSubtitle}>Continue your faithful giving</ThemedText>
           </View>
 
+          <Card style={styles.selectedChurchCard}>
+            <View style={styles.selectedRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText style={styles.selectedLabel}>Your Church</ThemedText>
+                {churchLoading ? (
+                  <ActivityIndicator size="small" />
+                ) : selectedChurch ? (
+                  <>
+                    <ThemedText style={styles.selectedName}>
+                      {selectedChurch.name} {selectedChurch.verified ? <Feather name="check-circle" size={14} color="#10b981" /> : null}
+                    </ThemedText>
+                    {selectedChurch.denomination ? <ThemedText style={styles.selectedMeta}>{selectedChurch.denomination}</ThemedText> : null}
+                    {selectedChurch.address ? <ThemedText style={styles.selectedMeta}>{selectedChurch.address}</ThemedText> : null}
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                      <Pressable style={styles.smallPrimary} onPress={onGive}>
+                        <ThemedText style={styles.smallPrimaryText}>Give</ThemedText>
+                      </Pressable>
+                      <Pressable style={styles.smallOutline} onPress={() => router.push(`/church/${selectedChurch.id}`)}>
+                        <ThemedText style={styles.smallOutlineText}>View</ThemedText>
+                      </Pressable>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <ThemedText style={styles.noChurchText}>No church selected</ThemedText>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                      <Pressable style={styles.smallPrimary} onPress={onChangeChurch}>
+                        <ThemedText style={styles.smallPrimaryText}>Find a Church</ThemedText>
+                      </Pressable>
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+          </Card>
+
           <View style={styles.summaryRow}>
             <Card style={styles.summaryCard}>
               <View style={styles.summaryCardContentRow}>
                 <Feather name="dollar-sign" size={28} color="#058b00ff" style={styles.summaryCardIcon} />
                 <View>
                   <ThemedText style={styles.summaryLabel}>This Month</ThemedText>
-                  <ThemedText style={styles.summaryValue}>
-                    {loading ? '...' : `$${thisMonth.toLocaleString()}`}
-                  </ThemedText>
+                  <ThemedText style={styles.summaryValue}>{loading ? '...' : `$${thisMonth.toLocaleString()}`}</ThemedText>
                 </View>
               </View>
             </Card>
@@ -121,9 +206,7 @@ export default function Dashboard() {
                 <Feather name="calendar" size={28} color="#0172dbff" style={styles.summaryCardIcon} />
                 <View>
                   <ThemedText style={styles.summaryLabel}>This Year</ThemedText>
-                  <ThemedText style={styles.summaryValue}>
-                    {loading ? '...' : `$${thisYear.toLocaleString()}`}
-                  </ThemedText>
+                  <ThemedText style={styles.summaryValue}>{loading ? '...' : `$${thisYear.toLocaleString()}`}</ThemedText>
                 </View>
               </View>
             </Card>
@@ -135,22 +218,10 @@ export default function Dashboard() {
                 <Feather name="heart" size={28} color="#ff0303ff" />
               </View>
               <View>
-                <ThemedText style={styles.usualAmount}>
-                  Your usual amount: {loading ? '...' : `$${usualAmount}`}
-                </ThemedText>
+                <ThemedText style={styles.usualAmount}>Your usual amount: {loading ? '...' : `$${usualAmount}`}</ThemedText>
               </View>
 
-              <Pressable
-                style={({ pressed }) => [
-                  styles.payButton,
-                  pressed && { opacity: 0.8 },
-                ]}
-                onPress={() => {
-                  router.push('/(tabs)/give');
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Pay now"
-              >
+              <Pressable style={styles.payButton} onPress={onGive}>
                 <ThemedText style={styles.payButtonText}>Pay Now</ThemedText>
               </Pressable>
             </View>
@@ -160,16 +231,9 @@ export default function Dashboard() {
             <View>
               {loading && <ActivityIndicator size="small" color="#0369A1" />}
               {error && <ThemedText style={{ color: 'red' }}>{error}</ThemedText>}
-              {!loading && !error && tithes.length === 0 && (
-                <ThemedText>No tithes found.</ThemedText>
-              )}
+              {!loading && !error && tithes.length === 0 && <ThemedText>No tithes found.</ThemedText>}
               {!loading && !error && tithes.map((t) => (
-                <Transaction
-                  key={t.id}
-                  title="Tithe"
-                  date={new Date(t.datetime_created).toLocaleDateString()}
-                  amount={`$${t.amount}`}
-                />
+                <Transaction key={t.id} title="Tithe" date={new Date(t.datetime_created).toLocaleDateString()} amount={`$${t.amount}`} />
               ))}
             </View>
           </Card>
@@ -184,9 +248,21 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   container: { padding: 16, paddingBottom: 96 },
-  header: { marginBottom: 10 },
+  header: { marginBottom: 8 },
   welcomeTitle: { fontSize: 22, fontWeight: '700', textAlign: 'center' },
   welcomeSubtitle: { fontSize: 14, color: '#6B7280', marginTop: 4, textAlign: 'center' },
+
+  selectedChurchCard: { marginBottom: 12, paddingVertical: 12, paddingHorizontal: 12 },
+  selectedRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  selectedLabel: { fontSize: 13, color: '#6B7280', marginBottom: 6 },
+  selectedName: { fontSize: 18, fontWeight: '700' },
+  selectedMeta: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  noChurchText: { fontSize: 14, color: '#374151' },
+
+  smallPrimary: { backgroundColor: '#0369A1', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  smallPrimaryText: { color: '#fff', fontWeight: '700' },
+  smallOutline: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E6E6E9', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  smallOutlineText: { color: '#0369A1', fontWeight: '700' },
 
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
   summaryCardContentRow: { flexDirection: 'row', alignItems: 'center' },
@@ -205,9 +281,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
     marginLeft: 'auto',
+    alignItems: 'center',
   },
   payButtonText: { color: '#fff', fontWeight: '600' },
 

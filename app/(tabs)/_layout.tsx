@@ -71,6 +71,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="find"
+        options={{
+          title: 'Find',
+          tabBarIcon: ({ color }) => <Feather name="map" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="give"
         options={{
           title: 'Give',
