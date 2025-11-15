@@ -11,41 +11,78 @@ import { supabase } from '@/services/supabase';
 type Church = {
   id: string;
   name: string;
+  ein?: string;
   denomination?: string;
-  address?: string;
-  distanceMiles?: number;
-  members?: string;
-  verified?: boolean;
+  validated?: boolean;
+  datetime_created?: string;
+  datetime_updated?: string;
+  username?: string;
+  phone?: string;
+  stripe_account_id?: string;
 };
-
-const MOCK_CHURCHES: Church[] = [
-  { id: '1', name: 'Grace Community Church', denomination: 'Non-Denominational', address: '123 Main Street, Springfield', distanceMiles: 0.5, members: '500+ members', verified: true },
-  { id: '2', name: 'First Baptist Church', denomination: 'Baptist', address: '456 Oak Avenue, Springfield', distanceMiles: 1.2, members: '1000+ members', verified: true },
-  { id: '3', name: 'New Life Fellowship', denomination: 'Christian', address: '789 Elm Road, Springfield', distanceMiles: 2.1, members: '300+ members', verified: true },
-];
 
 export default function Find() {
   const [query, setQuery] = useState('');
   const [denomination, setDenomination] = useState<'All' | string>('All');
-  const [sortByDistance, setSortByDistance] = useState(true);
+  const [sortByName, setSortByName] = useState(true);
   const [loadingPref, setLoadingPref] = useState(false);
-
-  const [churches, setChurches] = useState<Church[]>(MOCK_CHURCHES);
+  const [loading, setLoading] = useState(true);
+  const [churches, setChurches] = useState<Church[]>([]);
 
   useEffect(() => {
-    // fetch real church list from Supabase
-    // (async () => {
-    //   const { data } = await supabase.from('church').select('id,name,denomination,address,latitude,longitude,members,verified');
-    //   if (data) setChurches(data as Church[]);
-    // })();
+    fetchChurches();
   }, []);
 
+  const fetchChurches = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching churches from database...');
+      
+      const { data, error } = await supabase
+        .from('church')
+        .select('*');
+      
+      console.log('Supabase response:', { data, error });
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      if (data) {
+        console.log('Number of churches fetched:', data.length);
+        setChurches(data as Church[]);
+      }
+    } catch (error) {
+      console.error('Error fetching churches:', error);
+      Alert.alert('Error', 'Failed to load churches');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filtered = useMemo(() => {
-    let list = churches.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
-    if (denomination !== 'All') list = list.filter((c) => (c.denomination || '').toLowerCase() === denomination.toLowerCase());
-    if (sortByDistance) list = [...list].sort((a, b) => (a.distanceMiles ?? 0) - (b.distanceMiles ?? 0));
+    if (!churches || churches.length === 0) return [];
+    
+    let list = churches.filter((c) => {
+      if (!c || !c.name) return false;
+      
+      // Filter by search query
+      const matchesQuery = c.name.toLowerCase().includes(query.toLowerCase());
+      
+      // Filter by denomination
+      const matchesDenomination = denomination === 'All' || 
+        (c.denomination && c.denomination.toLowerCase() === denomination.toLowerCase());
+      
+      return matchesQuery && matchesDenomination;
+    });
+    
+    if (sortByName) {
+      list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    
     return list;
-  }, [churches, query, denomination, sortByDistance]);
+  }, [churches, query, denomination, sortByName]);
 
   const saveSelectedChurchPreference = async (churchId: string) => {
     setLoadingPref(true);
@@ -55,41 +92,60 @@ export default function Find() {
       if (authErr || !user) throw new Error('Not signed in');
 
       const payload = { user_id: user.id, key: 'selected_church_id', value: churchId };
-      const { error } = await supabase.from('user_preferences').upsert(payload, { onConflict: ['user_id', 'key'] });
+      const { error } = await supabase.from('user_preferences').upsert(payload, { onConflict: 'user_id,key' });
       if (error) throw error;
+      
+      return true;
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'Failed to save selection');
-      setLoadingPref(false);
       return false;
     } finally {
       setLoadingPref(false);
     }
-    return true;
   };
 
   const onGiveNow = async (church: Church) => {
     const ok = await saveSelectedChurchPreference(church.id);
     if (!ok) return;
-    // navigate to Give tab and pass churchId param for immediate display
-    router.push({ pathname: '/(tabs)/give', params: { churchId: church.id } as any } as any);
+    router.push({ pathname: '/(tabs)/give', params: { churchId: church.id } } as any);
+  };
+
+  const cycleDenomination = () => {
+    if (denomination === 'All') setDenomination('Baptist');
+    else if (denomination === 'Baptist') setDenomination('Non-Denominational');
+    else if (denomination === 'Non-Denominational') setDenomination('Catholic');
+    else if (denomination === 'Catholic') setDenomination('Methodist');
+    else if (denomination === 'Methodist') setDenomination('Presbyterian');
+    else if (denomination === 'Presbyterian') setDenomination('Lutheran');
+    else setDenomination('All');
   };
 
   const renderItem = ({ item }: { item: Church }) => (
     <Card style={styles.churchCard}>
       <View style={styles.churchRow}>
         <View style={styles.churchInfo}>
-          <ThemedText style={styles.churchName}>{item.name} {item.verified ? <Feather name="check-circle" size={14} color="#10b981" /> : null}</ThemedText>
-          {item.denomination ? <ThemedText style={styles.churchMeta}>{item.denomination}</ThemedText> : null}
-          {item.address ? <ThemedText style={styles.churchMeta}>{item.address}</ThemedText> : null}
-          <View style={styles.metaRow}>
-            {typeof item.distanceMiles === 'number' && <ThemedText style={styles.distance}>{item.distanceMiles} miles away</ThemedText>}
-            {item.members ? <ThemedText style={styles.members}>{item.members}</ThemedText> : null}
+          <View style={styles.nameRow}>
+            <ThemedText style={styles.churchName}>{item.name}</ThemedText>
+            {item.validated && <Feather name="check-circle" size={14} color="#10b981" />}
           </View>
+          
+          {item.denomination && <ThemedText style={styles.churchMeta}>{item.denomination}</ThemedText>}
+          {item.ein && <ThemedText style={styles.churchMeta}>EIN: {item.ein}</ThemedText>}
+          {item.phone && <ThemedText style={styles.churchMeta}>Phone: {item.phone}</ThemedText>}
+          {item.username && <ThemedText style={styles.churchMeta}>Contact: {item.username}</ThemedText>}
         </View>
 
         <View style={styles.actions}>
-          <Pressable style={styles.giveBtn} onPress={() => onGiveNow(item)}>
-            {loadingPref ? <ActivityIndicator size="small" color="#fff" /> : <ThemedText style={styles.giveText}>Give Now</ThemedText>}
+          <Pressable 
+            style={[styles.giveBtn, loadingPref && styles.giveBtnDisabled]} 
+            onPress={() => onGiveNow(item)} 
+            disabled={loadingPref}
+          >
+            {loadingPref ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <ThemedText style={styles.giveText}>Give Now</ThemedText>
+            )}
           </Pressable>
 
           <Pressable style={styles.detailsBtn} onPress={() => router.push(`/church/${item.id}`)}>
@@ -100,36 +156,72 @@ export default function Find() {
     </Card>
   );
 
+  if (loading) {
+    return (
+      <ThemedView style={styles.safe}>
+        <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#0369A1" />
+          <ThemedText style={{ marginTop: 12 }}>Loading churches...</ThemedText>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={styles.safe}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.container}>
           <View style={styles.header}>
             <ThemedText type="title" style={styles.title}>Find Churches</ThemedText>
-            <ThemedText style={styles.subtitle}>Discover churches in your area</ThemedText>
+            <ThemedText style={styles.subtitle}>Discover churches</ThemedText>
           </View>
 
           <View style={styles.searchRow}>
             <View style={styles.searchBox}>
               <Feather name="search" size={18} color="#6B7280" style={{ marginRight: 8 }} />
-              <TextInput value={query} onChangeText={setQuery} placeholder="Search churches by name..." placeholderTextColor="#9CA3AF" style={styles.searchInput} returnKeyType="search" />
+              <TextInput 
+                value={query} 
+                onChangeText={setQuery} 
+                placeholder="Search churches by name..." 
+                placeholderTextColor="#9CA3AF" 
+                style={styles.searchInput} 
+                returnKeyType="search" 
+              />
             </View>
 
-            <Pressable onPress={() => setDenomination((p) => (p === 'All' ? 'Baptist' : p === 'Baptist' ? 'Non-Denominational' : 'All'))} style={styles.filterBtn}>
+            <Pressable onPress={cycleDenomination} style={styles.filterBtn}>
               <Feather name="sliders" size={18} color="#0369A1" />
               <ThemedText style={styles.filterText}>{denomination}</ThemedText>
             </Pressable>
           </View>
 
           <View style={styles.resultHeader}>
-            <ThemedText style={styles.resultCount}>{filtered.length} churches found nearby</ThemedText>
-            <Pressable style={styles.sortBtn} onPress={() => setSortByDistance((v) => !v)}>
-              <Feather name="map-pin" size={14} color="#0369A1" />
-              <ThemedText style={styles.sortText}>{sortByDistance ? 'Sort by distance' : 'Unsorted'}</ThemedText>
+            <ThemedText style={styles.resultCount}>
+              {filtered.length} {filtered.length === 1 ? 'church' : 'churches'} found
+            </ThemedText>
+            <Pressable style={styles.sortBtn} onPress={() => setSortByName((v) => !v)}>
+              <Feather name="align-left" size={14} color="#0369A1" />
+              <ThemedText style={styles.sortText}>
+                {sortByName ? 'Sorted A-Z' : 'Unsorted'}
+              </ThemedText>
             </Pressable>
           </View>
 
-          <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={renderItem} contentContainerStyle={{ paddingBottom: 96 }} showsVerticalScrollIndicator={false} />
+          <FlatList 
+            data={filtered} 
+            keyExtractor={(i) => i.id} 
+            renderItem={renderItem} 
+            contentContainerStyle={{ paddingBottom: 96 }} 
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={{ padding: 32, alignItems: 'center' }}>
+                <Feather name="search" size={48} color="#D1D5DB" />
+                <ThemedText style={{ marginTop: 12, color: '#6B7280', textAlign: 'center' }}>
+                  No churches found
+                </ThemedText>
+              </View>
+            }
+          />
         </View>
       </SafeAreaView>
     </ThemedView>
@@ -144,28 +236,73 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
 
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 12, borderWidth: 1, borderColor: '#E6E6E9', height: 44 },
+  searchBox: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#fff', 
+    borderRadius: 10, 
+    paddingHorizontal: 12, 
+    borderWidth: 1, 
+    borderColor: '#E6E6E9', 
+    height: 44 
+  },
   searchInput: { flex: 1, fontSize: 16, color: '#0F172A' },
-  filterBtn: { marginLeft: 8, paddingHorizontal: 12, height: 44, borderRadius: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E6E6E9', flexDirection: 'row', alignItems: 'center', gap: 8 },
+  filterBtn: { 
+    marginLeft: 8, 
+    paddingHorizontal: 12, 
+    height: 44, 
+    borderRadius: 10, 
+    backgroundColor: '#fff', 
+    borderWidth: 1, 
+    borderColor: '#E6E6E9', 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8 
+  },
   filterText: { marginLeft: 6, color: '#0369A1', fontWeight: '600' },
 
-  resultHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
+  resultHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginTop: 12,
+    marginBottom: 4
+  },
   resultCount: { fontSize: 14, color: '#6B7280' },
   sortBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  sortText: { color: '#0369A1', marginLeft: 6 },
+  sortText: { color: '#0369A1', marginLeft: 6, fontSize: 13 },
 
   churchCard: { marginTop: 12, paddingVertical: 12, paddingHorizontal: 12 },
   churchRow: { flexDirection: 'row', alignItems: 'flex-start' },
   churchInfo: { flex: 1 },
-  churchName: { fontSize: 16, fontWeight: '700', marginBottom: 4, color: '#0F172A' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  churchName: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
   churchMeta: { fontSize: 13, color: '#6B7280', marginBottom: 2 },
-  metaRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
-  distance: { fontSize: 13, color: '#6B7280' },
-  members: { fontSize: 13, color: '#6B7280' },
 
   actions: { marginLeft: 12, justifyContent: 'space-between' },
-  giveBtn: { backgroundColor: '#0369A1', paddingHorizontal: 12, paddingVertical: Platform.OS === 'ios' ? 10 : 8, borderRadius: 8, marginBottom: 8, alignItems: 'center', minWidth: 84 },
+  giveBtn: { 
+    backgroundColor: '#0369A1', 
+    paddingHorizontal: 12, 
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8, 
+    borderRadius: 8, 
+    marginBottom: 8, 
+    alignItems: 'center', 
+    minWidth: 84 
+  },
+  giveBtnDisabled: {
+    opacity: 0.6,
+  },
   giveText: { color: '#fff', fontWeight: '700' },
-  detailsBtn: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: Platform.OS === 'ios' ? 10 : 8, borderRadius: 8, borderWidth: 1, borderColor: '#E6E6E9', alignItems: 'center', minWidth: 84 },
+  detailsBtn: { 
+    backgroundColor: '#fff', 
+    paddingHorizontal: 12, 
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8, 
+    borderRadius: 8, 
+    borderWidth: 1, 
+    borderColor: '#E6E6E9', 
+    alignItems: 'center', 
+    minWidth: 84 
+  },
   detailsText: { color: '#0369A1', fontWeight: '700' },
 });

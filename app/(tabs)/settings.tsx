@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -11,11 +11,52 @@ import { supabase } from '@/services/supabase';
 export default function SettingsScreen() {
   const [autoPay, setAutoPay] = useState(true);
   const [notifyPayments, setNotifyPayments] = useState(true);
+  const [defaultAmount, setDefaultAmount] = useState('20');
   const [reminders, setReminders] = useState(true);
   const [monthlyStatements, setMonthlyStatements] = useState(true);
-  const [defaultAmount, setDefaultAmount] = useState('20');
+  const [profile, setProfile] = useState<any>(null);
   const [frequency, setFrequency] = useState('Weekly');
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  const frequencies = ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'Annually'];
+   
+  useEffect(() => {
+    loadProfile();
+  }, []);
+  
+  const loadProfile = async () => {
+    try {
+      setLoading(true);	
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const email = user?.email;
 
+      if (userError) throw userError;
+      if (!user) throw new Error('No User Logged in!');
+      
+      setUserId(user.id);
+
+      const { data, error } = await supabase
+        .from('user') 
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      
+      setProfile({ ...data, email });
+      setDefaultAmount(data.default_tithe_amount?.toString() || '20');
+      setFrequency(data.tithe_frequency?.toString() || 'Weekly');
+      setAutoPay(data.auto_pay || false);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      Alert.alert('Error', 'Failed to load profile data');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -33,6 +74,58 @@ export default function SettingsScreen() {
     </View>
   );
 
+  const handleSaveAmount = async () => {
+    const amount = parseFloat(defaultAmount);
+    if (isNaN(amount) || amount < 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid number');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user logged in');
+
+      const { error } = await supabase
+        .from('user')
+        .update({ default_tithe_amount: amount })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      Alert.alert('Success', 'Default amount updated!');
+    } catch (error) {
+      console.error('Error updating:', error);
+      Alert.alert('Error', 'Failed to update amount');
+    }
+  };
+  
+  const setTitheFrequency = async (newFrequency: string) => {
+    if (!userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('user')
+        .update({ tithe_frequency: newFrequency })
+        .eq('id', userId);
+
+      if (error) throw error;
+    
+      setFrequency(newFrequency);
+      setDropdownOpen(false);
+      Alert.alert('Success', `Frequency updated to ${newFrequency}`);
+    } catch (error) {
+      console.error('Error updating frequency:', error);
+      Alert.alert('Error', 'Failed to update frequency');
+    }
+  };
+
+  const getFullName = () => {
+    if (!profile) return 'N/A';
+    return [profile.first_name, profile.middle_name, profile.last_name]
+      .filter(Boolean)
+      .join(' ') || 'N/A';
+  };
+
   return (
     <ThemedView style={styles.safe}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -43,9 +136,9 @@ export default function SettingsScreen() {
           </View>
 
           <Card title="Profile Information" style={styles.card}>
-            {row('Full Name', <ThemedText style={styles.value}>John Smith</ThemedText>)}
-            {row('Email Address', <ThemedText style={styles.value}>john.smith@email.com</ThemedText>)}
-            {row('Phone Number', <ThemedText style={styles.value}>+1 (555) 123-4567</ThemedText>)}
+            {row('Full Name', <ThemedText style={styles.value}>{getFullName()}</ThemedText>)}
+            {row('Email Address', <ThemedText style={styles.value}>{profile?.email || 'N/A'}</ThemedText>)}
+            {row('Phone Number', <ThemedText style={styles.value}>{profile?.phone || 'N/A'}</ThemedText>)}
 
             <Pressable style={styles.primaryButton} onPress={() => Alert.alert('Update Profile', 'Profile update flow here')} accessibilityRole="button">
               <ThemedText style={styles.primaryButtonText}>Update Profile</ThemedText>
@@ -64,12 +157,45 @@ export default function SettingsScreen() {
               />
             </View>
 
+            <Pressable 
+              style={styles.primaryButton} 
+              onPress={handleSaveAmount}
+            >
+              <ThemedText style={styles.primaryButtonText}>Save Amount</ThemedText>
+            </Pressable>
+
             <View style={styles.formRow}>
               <ThemedText style={styles.label}>Giving Frequency</ThemedText>
-              <Pressable style={styles.select} onPress={() => Alert.alert('Frequency', 'Open frequency picker')} accessibilityRole="button">
-                <ThemedText style={styles.value}>{frequency}</ThemedText>
-                <Feather name="chevron-right" size={18} color="#6B7280" />
-              </Pressable>
+              <View style={styles.dropdownWrapper}>
+                <Pressable 
+                  style={styles.dropdownButton}
+                  onPress={() => setDropdownOpen(!dropdownOpen)}
+                >
+                  <ThemedText style={styles.value}>{frequency}</ThemedText>
+                  <Feather 
+                    name={dropdownOpen ? "chevron-up" : "chevron-down"} 
+                    size={18} 
+                    color="#6B7280" 
+                  />
+                </Pressable>
+
+                {dropdownOpen && (
+                  <View style={styles.dropdownList}>
+                    {frequencies.map((freq) => (
+                      <Pressable
+                        key={freq}
+                        style={styles.dropdownItem}
+                        onPress={() => setTitheFrequency(freq)}
+                      >
+                        <ThemedText style={styles.dropdownItemText}>{freq}</ThemedText>
+                        {frequency === freq && (
+                          <Feather name="check" size={16} color="#0369A1" />
+                        )}
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
             </View>
 
             <View style={styles.toggleBlock}>
@@ -183,4 +309,50 @@ const styles = StyleSheet.create({
   logoutText: { color: '#b91c1c', fontWeight: '700' },
 
   switchRowSimple: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+
+  dropdownWrapper: {
+    position: 'relative',
+    zIndex: 1000,
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E6E6E9',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    minWidth: 150,
+    justifyContent: 'space-between',
+  },
+  dropdownList: {
+    position: 'absolute',
+    top: 45,
+    right: 0,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E6E6E9',
+    borderRadius: 8,
+    minWidth: 150,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1001,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E6E6E9',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: '#111827',
+  },
 });
