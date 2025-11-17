@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
 import Card from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { supabase } from '@/services/supabase';
+import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const [autoPay, setAutoPay] = useState(true);
@@ -181,18 +181,24 @@ export default function SettingsScreen() {
 
                 {dropdownOpen && (
                   <View style={styles.dropdownList}>
-                    {frequencies.map((freq) => (
-                      <Pressable
-                        key={freq}
-                        style={styles.dropdownItem}
-                        onPress={() => setTitheFrequency(freq)}
-                      >
-                        <ThemedText style={styles.dropdownItemText}>{freq}</ThemedText>
-                        {frequency === freq && (
-                          <Feather name="check" size={16} color="#0369A1" />
-                        )}
-                      </Pressable>
-                    ))}
+                    <ScrollView
+                      nestedScrollEnabled={true} 
+                      style={{ maxHeight: 90 }}  
+                      // contentContainerStyle={{ paddingVertical: 0 }}
+                    >
+                      {frequencies.map((freq) => (
+                        <Pressable
+                          key={freq}
+                          style={styles.dropdownItem}
+                          onPress={() => setTitheFrequency(freq)}
+                        >
+                          <ThemedText style={styles.dropdownItemText}>{freq}</ThemedText>
+                          {frequency === freq && (
+                            <Feather name="check" size={16} color="#0369A1" />
+                          )}
+                        </Pressable>
+                      ))}
+                    </ScrollView>
                   </View>
                 )}
               </View>
