@@ -8,6 +8,7 @@ import { ThemedView } from '../../components/themed-view';
 import Card from '../../components/card';
 import Transaction from '../../components/transaction';
 import { supabase } from '../../services/supabase';
+import { useFocusEffect } from '@react-navigation/native';
 
 type Tithe = {
   id: number;
@@ -27,6 +28,7 @@ type Church = {
 };
 
 export default function Dashboard() {
+	  console.log('Dashboard: Component mounted');
   const [tithes, setTithes] = useState<Tithe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,14 +41,14 @@ export default function Dashboard() {
   const [selectedChurch, setSelectedChurch] = useState<Church | null>(null);
   const [churchLoading, setChurchLoading] = useState(true);
 
-  useEffect(() => {
+  useFocusEffect(
+  React.useCallback(() => {
     let mounted = true;
 
     const load = async () => {
       setLoading(true);
       setError(null);
       setChurchLoading(true);
-
       try {
         const { data: authData, error: authErr } = await supabase.auth.getUser();
         const user = authData?.user;
@@ -56,27 +58,32 @@ export default function Dashboard() {
         }
 
         const userId = user.id;
-
+        
         // read selected_church_id preference
         try {
-          const { data: prefRow, error: prefError } = await supabase
-            .from('user_preferences')
-            .select('value')
-            .eq('user_id', userId)
-            .eq('key', 'selected_church_id')
-            .limit(1)
+          const { data: profile, error: profileError } = await supabase
+            .from('user')
+            .select('selected_church_id')
+            .eq('id', userId)
             .single();
 
-          if (!prefError && prefRow?.value) {
-            const selectedId = String(prefRow.value);
-            const { data: churchData, error: churchError } = await supabase
-              .from('church')
-              .select('id,name,denomination,address,verified')
-              .eq('id', selectedId)
-              .single();
+          if (!profileError) {
+            const churchId = profile?.selected_church_id;
+            
+            if (churchId) {
+              const { data: churchData, error: churchError } = await supabase
+                .from('church')
+                .select('id,name,denomination,address')
+                .eq('id', churchId)
+                .single();
 
-            if (!churchError && churchData && mounted) {
-              setSelectedChurch(churchData as Church);
+              if (!churchError && churchData && mounted) {
+                setSelectedChurch(churchData as Church);
+              }
+            } else {
+              // No church selected
+              if (mounted) setSelectedChurch(null);
+	  console.log("church state updated hahaha.");
             }
           }
         } catch {
@@ -135,7 +142,8 @@ export default function Dashboard() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [])
+);
 
   const onChangeChurch = () => {
     router.push('/(tabs)/find');

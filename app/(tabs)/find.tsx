@@ -86,17 +86,20 @@ export default function Find() {
 
   const saveSelectedChurchPreference = async (churchId: string) => {
     setLoadingPref(true);
-    try {
-      const { data: authData, error: authErr } = await supabase.auth.getUser();
-      const user = authData?.user;
-      if (authErr || !user) throw new Error('Not signed in');
+   try {
+    const { data: authData, error: authErr } = await supabase.auth.getUser();
+    const user = authData?.user;
+    if (authErr || !user) throw new Error('Not signed in');
 
-      const payload = { user_id: user.id, key: 'selected_church_id', value: churchId };
-      const { error } = await supabase.from('user_preferences').upsert(payload, { onConflict: 'user_id,key' });
-      if (error) throw error;
-      
-      return true;
-    } catch (e: any) {
+    const { error } = await supabase
+      .from('user')
+      .update({ selected_church_id: churchId })
+      .eq('id', user.id);
+    
+    if (error) throw error;
+    
+    	return true;   
+   } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'Failed to save selection');
       return false;
     } finally {
