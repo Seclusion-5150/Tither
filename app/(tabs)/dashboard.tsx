@@ -28,7 +28,6 @@ type Church = {
 };
 
 export default function Dashboard() {
-	  console.log('Dashboard: Component mounted');
   const [tithes, setTithes] = useState<Tithe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +82,6 @@ export default function Dashboard() {
             } else {
               // No church selected
               if (mounted) setSelectedChurch(null);
-	  console.log("church state updated hahaha.");
             }
           }
         } catch {

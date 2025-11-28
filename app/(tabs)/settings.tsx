@@ -5,7 +5,7 @@ import { supabase } from '@/services/supabase';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
@@ -19,18 +19,24 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  
+  const [cards, setCards] = useState([]);
+  const [cardsLoading, setCardsLoading] = useState(false);
   const frequencies = ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'Annually'];
    
   useEffect(() => {
     loadProfile();
   }, []);
   
+  useEffect(() => {
+    if (userId) {
+      fetchCards();
+    }
+  }, [userId]);
+
   const loadProfile = async () => {
     try {
       setLoading(true);	
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      const email = user?.email;
 
       if (userError) throw userError;
       if (!user) throw new Error('No User Logged in!');
@@ -45,7 +51,7 @@ export default function SettingsScreen() {
 
       if (error) throw error;
       
-      setProfile({ ...data, email });
+      setProfile({ ...data, email: user.email });
       setDefaultAmount(data.default_tithe_amount?.toString() || '20');
       setFrequency(data.tithe_frequency?.toString() || 'Weekly');
       setAutoPay(data.auto_pay || false);
@@ -124,6 +130,45 @@ export default function SettingsScreen() {
     return [profile.first_name, profile.middle_name, profile.last_name]
       .filter(Boolean)
       .join(' ') || 'N/A';
+  };
+  
+  const fetchCards = async () => {
+
+	if(!userId) return;
+  	  
+	  try {
+		setCardsLoading(true);
+
+		const { data, error } = await supabase
+					.from('payment_methods')
+					.select("*")
+					.eq('user_id', userId)
+					.order('is_default', { ascending: false }) // Show default card first
+					.order('created_at', { ascending: false }); // Then by newest
+		if(error) {
+
+			console.log("Error fetching cards: ", error.message);
+			Alert.alert("Error", "Failed to load payment methods.");
+			return;
+		}
+
+		setCards(data || []);
+	}
+	catch(error) {
+		console.log("An unexpected error occurred: ", error.message);
+	}
+	finally {
+		setCardsLoading(false);
+	}
+  };
+
+
+  const editPaymentMethod = (cardId : string) => {
+  	router.push(`../paymentMethods/${cardId}`);
+  };
+
+  const addPaymentMethod = () => {
+	router.push(`../paymentMethods/${userId}`);  	
   };
 
   return (
@@ -213,22 +258,54 @@ export default function SettingsScreen() {
             </View>
           </Card>
 
-          <Card title="Payment Methods" style={styles.card}>
-            <View style={styles.cardRow}>
-              <View>
-                <ThemedText style={styles.label}>Visa ending in 4242</ThemedText>
-                <ThemedText style={styles.smallText}>Expires 07/26</ThemedText>
-              </View>
+			<Card title="Payment Methods" style={styles.card}>
+			  {cardsLoading ? (
+				<ActivityIndicator size="small" color="#0369A1" />
+			  ) : cards.length > 0 ? (
+				<>
+				  {cards.map((item: any, index: number) => (
+					<View key={item.id}>
+					  <View style={styles.cardRow}>
+						<View style={{ flex: 1 }}>
+						  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+							<ThemedText style={styles.label}>
+							  {getCardBrandDisplay(item.card_brand)} ending in {item.card_last4}
+							</ThemedText>
+							{item.is_default && (
+							  <View style={styles.defaultBadge}>
+								<ThemedText style={styles.defaultBadgeText}>Default</ThemedText>
+							  </View>
+							)}
+						  </View>
+						  <ThemedText style={styles.smallText}>
+							Expires {String(item.card_exp_month).padStart(2, '0')}/{String(item.card_exp_year).slice(-2)}
+						  </ThemedText>
+						</View>
 
-              <Pressable onPress={() => Alert.alert('Edit card', 'Card edit flow here')} style={styles.ghostButton} accessibilityRole="button">
-                <ThemedText style={styles.ghostText}>Edit</ThemedText>
-              </Pressable>
-            </View>
+						<Pressable 
+						  onPress={() => editPaymentMethod(item.id)} 
+						  style={styles.ghostButton} 
+						  accessibilityRole="button"
+						>
+						  <ThemedText style={styles.ghostText}>Edit</ThemedText>
+						</Pressable>
+					  </View>
+					  {index < cards.length - 1 && <View style={styles.separator} />}
+					</View>
+				  ))}
+				</>
+			  ) : (
+				<ThemedText style={styles.emptyText}>No payment methods saved</ThemedText>
+			  )}
 
-            <Pressable onPress={() => Alert.alert('Add payment', 'Add payment method flow')} style={styles.primaryButtonOutline} accessibilityRole="button">
-              <ThemedText style={styles.primaryButtonOutlineText}>Add New Payment Method</ThemedText>
-            </Pressable>
-          </Card>
+			  <Pressable 
+				onPress={addPaymentMethod} 
+				style={styles.primaryButtonOutline} 
+				accessibilityRole="button"
+			  >
+				<ThemedText style={styles.primaryButtonOutlineText}>Add New Payment Method</ThemedText>
+			  </Pressable>
+			</Card>
 
           <Card title="Notifications" style={styles.card}>
             <View style={styles.switchRowSimple}>
@@ -361,4 +438,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#111827',
   },
+  defaultBadge: {
+  backgroundColor: '#2ecc71',
+  paddingHorizontal: 6,
+  paddingVertical: 2,
+  borderRadius: 4,
+},
+defaultBadgeText: {
+  color: 'white',
+  fontSize: 10,
+  fontWeight: 'bold',
+},
+separator: {
+  height: 1,
+  backgroundColor: '#E6E6E9',
+  marginVertical: 8,
+},
+emptyText: {
+  textAlign: 'center',
+  color: '#999',
+  paddingVertical: 16,
+  fontSize: 14,
+},
 });

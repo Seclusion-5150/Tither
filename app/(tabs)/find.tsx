@@ -36,25 +36,20 @@ export default function Find() {
   const fetchChurches = async () => {
     try {
       setLoading(true);
-      console.log('Fetching churches from database...');
       
       const { data, error } = await supabase
         .from('church')
         .select('*');
       
-      console.log('Supabase response:', { data, error });
       
       if (error) {
-        console.error('Supabase error:', error);
         throw error;
       }
       
       if (data) {
-        console.log('Number of churches fetched:', data.length);
         setChurches(data as Church[]);
       }
     } catch (error) {
-      console.error('Error fetching churches:', error);
       Alert.alert('Error', 'Failed to load churches');
     } finally {
       setLoading(false);

@@ -64,7 +64,6 @@ export default function Give() {
     try {
       // If there's a church ID in the URL params, use that
       if (paramChurchId && paramChurchId.trim()) {
-	console.log("TESTINGINGIGNIGNG");
         await fetchChurchById(paramChurchId);
         return;
       }
