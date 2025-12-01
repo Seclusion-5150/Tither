@@ -8,12 +8,14 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const publishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''; 
+  
   return (
     <StripeProvider publishableKey={publishableKey}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(church-tabs)" />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
         <StatusBar style="auto" />

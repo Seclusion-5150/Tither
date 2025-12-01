@@ -25,35 +25,45 @@ export default function LoginScreen() {
     });
 
     if (authError) {
-      console.log('Error: ', authError);
+      console.log('Auth Error: ', authError);
       Alert.alert('Error', 'Login Error: Incorrect Email or Password');
       return;
     }
 
     const userId = authData.user?.id;
+    console.log('Logged in user ID:', userId);
 
+    // Check church table first
     const { data: churchData, error: churchError } = await supabase
       .from('church')
       .select('*')
       .eq('id', userId)
       .single();
 
-    if (churchData) {
-      router.replace('/(tabs)/dashboard');
+    console.log('Church query result:', { churchData, churchError });
+
+    if (churchData && !churchError) {
+      console.log('Church account found!');
+      router.replace('/(church-tabs)/dashboard');
       return;
     }
 
+    // Check user table
     const { data: userData, error: userError } = await supabase
       .from('user')
       .select('*')
       .eq('id', userId)
       .single();
 
-    if (userData) {
+    console.log('User query result:', { userData, userError });
+
+    if (userData && !userError) {
+      console.log('User account found!');
       router.replace('/(tabs)/dashboard');
       return;
     }
 
+    console.log('No profile found in either table');
     Alert.alert('Error', 'Account profile not found');
   };
 
