@@ -42,7 +42,7 @@ export default function Give() {
       try {
         const { data, error } = await supabase
           .from('church')
-          .select('id,name,denomination,address,verified')
+          .select('id,name,denomination,address')
           .eq('id', id)
           .single();
 
@@ -58,63 +58,60 @@ export default function Give() {
       }
     };
 
-    const loadSelectedChurch = async () => {
-      setChurchLoading(true);
-      setChurchError(null);
+  const loadSelectedChurch = async () => {
+    setChurchLoading(true);
+    setChurchError(null);
+    try {
+      // If there's a church ID in the URL params, use that
+      if (paramChurchId && paramChurchId.trim()) {
+        await fetchChurchById(paramChurchId);
+        return;
+      }
 
-      try {
-        if (paramChurchId) {
-          await fetchChurchById(paramChurchId);
-          return;
-        }
+      // Get the authenticated user
+      const { data: authData, error: authErr } = await supabase.auth.getUser();
+      const user = authData?.user;
+      if (authErr || !user) {
+        setChurchError('Not signed in');
+        setChurchLoading(false);
+        return;
+      }
 
-        const { data: authData, error: authErr } = await supabase.auth.getUser();
-        const user = authData?.user;
-        if (authErr || !user) {
-          setChurchError('Not signed in');
-          setChurchLoading(false);
-          return;
-        }
+      // Fetch user profile with both church fields in one query
+      const { data: profile, error: profileError } = await supabase
+        .from('user')
+        .select('selected_church_id')
+        .eq('id', user.id)
+        .single();
 
-        const { data: prefRow, error: prefError } = await supabase
-          .from('user_preferences')
-          .select('value')
-          .eq('user_id', user.id)
-          .eq('key', 'selected_church_id')
-          .limit(1)
-          .single();
+      if (profileError) {
+        setChurchError('Failed to load user profile');
+        setChurchLoading(false);
+        return;
+      }
 
-        if (!prefError && prefRow?.value) {
-          await fetchChurchById(String(prefRow.value));
-          return;
-        }
-
-        // fallback to user.church_id
-        const { data: profile, error: profileError } = await supabase
-          .from('user')
-          .select('church_id')
-          .eq('id', user.id)
-          .single();
-
-        if (!profileError && profile?.church_id) {
-          await fetchChurchById(profile.church_id);
-          return;
-        }
-
+      // Priority: selected_church_id, fallback to church_id
+      const churchId = profile?.selected_church_id || profile?.church_id;
+    
+      if (churchId) {
+        await fetchChurchById(churchId);
+      } else {
         setSelectedChurch(null);
         setChurchLoading(false);
-      } catch {
-        setChurchError('Failed to load church');
-        setChurchLoading(false);
       }
-    };
+    } catch (error: any) {
+      setChurchError(error?.message ?? 'Failed to load church');
+      setChurchLoading(false);
+    }
+  };
 
-    loadSelectedChurch();
-    return () => {
-      mounted = false;
-    };
-  }, [paramChurchId]);
+  loadSelectedChurch();
 
+  return () => {
+    mounted = false;
+  };
+}, [paramChurchId]);
+  
   const onSelectPreset = (value: number) => {
     setSelectedPreset(value);
     setAmount(String(value));
