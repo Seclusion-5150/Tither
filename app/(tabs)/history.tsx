@@ -1,47 +1,36 @@
-import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import Card from '@/components/card';
 import Transaction from '@/components/transaction';
 import { Feather } from '@expo/vector-icons';
+import { supabase } from '@/services/supabase';
+import { useFocusEffect } from '@react-navigation/native';
 
-type HistoryItem = {
+type Tithe = {
   id: string;
-  title: string;
-  date: string;
-  method?: string;
-  status?: 'Completed' | 'Pending' | 'Failed';
-  amount: string;
-  note?: string;
+  user_id: string;
+  church_id: string;
+  amount: number;
+  status: string;
+  stripe_payment_intent_id?: string;
+  notes?: string;
+  created_at: string;
+};
+
+type Church = {
+  id: string;
+  name?: string;
+};
+
+type HistoryItem = Tithe & {
   churchName?: string;
 };
 
-const MOCK_HISTORY: HistoryItem[] = [
-  { id: '1', title: 'Tithe', date: 'Nov 01, 2025', method: 'Credit Card', status: 'Completed', amount: '$120', note: 'Faithful giving for December', churchName: 'Grace Community Church' },
-  { id: '2', title: 'Fundraiser', date: 'Oct 15, 2025', method: 'Mobile Payment', status: 'Completed', amount: '$200', note: 'New sanctuary construction', churchName: 'First Baptist Church' },
-  { id: '3', title: 'Missions', date: 'Jan 01, 2025', method: 'Bank Transfer', status: 'Completed', amount: '$75', note: 'Supporting missionaries in Kenya', churchName: 'New Life Fellowship' },
-  { id: '4', title: 'Offering', date: 'Dec 05, 2024', method: 'Credit Card', status: 'Completed', amount: '$50', note: 'Christmas outreach program', churchName: 'Grace Community Church' },
-  { id: '5', title: 'Tithe', date: 'Nov 15, 2024', method: 'Credit Card', status: 'Completed', amount: '$120', churchName: 'First Baptist Church' },
-  { id: '6', title: 'Tithe', date: 'Oct 15, 2024', method: 'Credit Card', status: 'Completed', amount: '$120', churchName: 'New Life Fellowship' },
-];
-
 const TYPES = ['All', 'Tithe', 'Offering', 'Mission', 'Fundraiser'] as const;
 const PERIODS = ['This Month', 'This Quarter', 'This Year', 'All Time'] as const;
-
-function parseDateString(dateStr: string): Date | null {
-  const iso = Date.parse(dateStr);
-  if (!Number.isNaN(iso)) return new Date(iso);
-  const d = new Date(dateStr);
-  if (!Number.isNaN(d.getTime())) return d;
-  try {
-    const normalized = dateStr.replace(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/, '$3-$1-$2');
-    const parsed = Date.parse(normalized);
-    if (!Number.isNaN(parsed)) return new Date(parsed);
-  } catch {}
-  return null;
-}
 
 function periodRange(period: typeof PERIODS[number]) {
   const now = new Date();
@@ -67,40 +56,118 @@ function periodRange(period: typeof PERIODS[number]) {
 export default function History() {
   const [filterType, setFilterType] = useState<typeof TYPES[number]>('All');
   const [period, setPeriod] = useState<typeof PERIODS[number]>('All Time');
+  const [tithes, setTithes] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalThisYear, setTotalThisYear] = useState(0);
 
-  const totalThisYear = '$685.00';
+  useFocusEffect(
+    React.useCallback(() => {
+      let mounted = true;
+
+      const loadTithes = async () => {
+        try {
+          setLoading(true);
+
+          // Get current user
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError || !user) {
+            Alert.alert('Error', 'Please log in to view history');
+            return;
+          }
+
+          // Fetch tithes
+          const { data: tithesData, error: tithesError } = await supabase
+            .from('tithes')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (tithesError) throw tithesError;
+
+          // Fetch church names for all unique church IDs
+          const churchIds = [...new Set(tithesData?.map(t => t.church_id).filter(Boolean))];
+          const churchMap: Record<string, string> = {};
+
+          if (churchIds.length > 0) {
+            const { data: churchesData } = await supabase
+              .from('church')
+              .select('id, name')
+              .in('id', churchIds);
+
+            churchesData?.forEach((church: Church) => {
+              if (church.id && church.name) {
+                churchMap[church.id] = church.name;
+              }
+            });
+          }
+
+          // Combine data
+          const historyItems: HistoryItem[] = (tithesData || []).map(tithe => ({
+            ...tithe,
+            churchName: tithe.church_id ? churchMap[tithe.church_id] : undefined,
+          }));
+
+          if (mounted) {
+            setTithes(historyItems);
+
+            // Calculate total for this year
+            const now = new Date();
+            const yearTotal = historyItems
+              .filter(t => new Date(t.created_at).getFullYear() === now.getFullYear())
+              .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+
+            setTotalThisYear(yearTotal);
+          }
+        } catch (error: any) {
+          console.error('Error loading history:', error);
+          Alert.alert('Error', 'Failed to load payment history');
+        } finally {
+          if (mounted) setLoading(false);
+        }
+      };
+
+      loadTithes();
+
+      return () => {
+        mounted = false;
+      };
+    }, [])
+  );
 
   const filtered = useMemo(() => {
-    let list = MOCK_HISTORY.slice();
+    let list = tithes.slice();
 
     if (filterType !== 'All') {
       const needle = filterType.toLowerCase();
-      list = list.filter((h) => (h.title || '').toLowerCase().includes(needle));
+      list = list.filter((h) => (h.notes || '').toLowerCase().includes(needle));
     }
 
     const range = periodRange(period);
     if (range) {
       const { start, end } = range;
       list = list.filter((h) => {
-        const parsed = parseDateString(h.date);
-        if (!parsed) return false;
+        const parsed = new Date(h.created_at);
         const t = parsed.getTime();
         return t >= start.getTime() && t <= end.getTime();
       });
     }
 
-    list.sort((a, b) => {
-      const da = parseDateString(a.date)?.getTime() ?? 0;
-      const db = parseDateString(b.date)?.getTime() ?? 0;
-      return db - da;
-    });
-
     return list;
-  }, [filterType, period]);
+  }, [tithes, filterType, period]);
 
   const onDownload = () => {
     Alert.alert('Download', 'Payment history CSV will be prepared for download.');
   };
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.safe}>
+        <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#0369A1" />
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.safe}>
@@ -115,7 +182,7 @@ export default function History() {
             <View style={styles.row}>
               <View>
                 <ThemedText style={styles.summaryLabel}>Total This Year</ThemedText>
-                <ThemedText style={styles.summaryValue}>{totalThisYear}</ThemedText>
+                <ThemedText style={styles.summaryValue}>${totalThisYear.toFixed(2)}</ThemedText>
                 <ThemedText style={styles.taxLabel}>Tax Year {new Date().getFullYear()}</ThemedText>
               </View>
 
@@ -175,15 +242,22 @@ export default function History() {
 
           <Card title="Transactions" style={styles.card}>
             <View>
-              {filtered.length === 0 && <ThemedText style={{ marginBottom: 8 }}>No transactions found for the selected filters.</ThemedText>}
+              {filtered.length === 0 && (
+                <ThemedText style={{ marginBottom: 8 }}>
+                  No transactions found for the selected filters.
+                </ThemedText>
+              )}
               {filtered.map((item) => (
                 <View key={item.id} style={styles.txWrap}>
                   <Transaction
-                    title={`${item.title}${item.churchName ? ` • ${item.churchName}` : ''}`}
-                    date={item.date}
-                    amount={item.amount}
+                    title={`Tithe${item.churchName ? ` • ${item.churchName}` : ''}`}
+                    date={new Date(item.created_at).toLocaleDateString()}
+                    amount={`$${parseFloat(item.amount.toString()).toFixed(2)}`}
                   />
-                  {item.note ? <ThemedText style={styles.txNote}>{item.note}</ThemedText> : null}
+                  {item.notes ? <ThemedText style={styles.txNote}>{item.notes}</ThemedText> : null}
+                  <ThemedText style={styles.txStatus}>
+                    Status: {item.status || 'Completed'}
+                  </ThemedText>
                 </View>
               ))}
             </View>
@@ -234,13 +308,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: '#E6E6E9',
-    // marginRight: 4,
-    // marginBottom: 4,
   },
   chipActive: { backgroundColor: '#0369A1', borderColor: '#0369A1' },
   chipText: { color: '#0F172A', fontSize: 14 },
   chipTextActive: { color: '#fff' },
 
-  txWrap: { marginBottom: 8 },
-  txNote: { marginTop: 6, fontSize: 14, color: '#374151' },
+  txWrap: { marginBottom: 12 },
+  txNote: { marginTop: 4, fontSize: 13, color: '#6B7280', fontStyle: 'italic' },
+  txStatus: { marginTop: 2, fontSize: 12, color: '#9CA3AF' },
 });

@@ -137,7 +137,7 @@ export default function Give() {
     setTimeout(() => {
       setLoading(false);
       router.push({
-        pathname: '/(tabs)/give/payment',
+        pathname: '../give/payment',
         params: {
           amount: n,
           offeringType,

@@ -11,12 +11,14 @@ import { supabase } from '../../services/supabase';
 import { useFocusEffect } from '@react-navigation/native';
 
 type Tithe = {
-  id: number;
+  id: string;
   user_id: string;
   church_id: string;
   amount: number;
-  is_success: boolean;
-  datetime_created: string;
+  status: string;
+  stripe_payment_intent_id?: string;
+  notes?: string;
+  created_at: string;
 };
 
 type Church = {
@@ -93,7 +95,7 @@ export default function Dashboard() {
           .from('tithes')
           .select('*')
           .eq('user_id', userId)
-          .order('datetime_created', { ascending: false });
+          .order('created_at', { ascending: false });
 
         if (tithesError) {
           setError('Could not fetch tithes');
@@ -112,7 +114,7 @@ export default function Dashboard() {
         let lastAmount = 0;
 
         list.forEach((t) => {
-          const d = new Date(t.datetime_created);
+          const d = new Date(t.created_at);
           if (d.getFullYear() === year) {
             yearTotal += t.amount;
             if (d.getMonth() === month) monthTotal += t.amount;
@@ -239,7 +241,7 @@ export default function Dashboard() {
               {error && <ThemedText style={{ color: 'red' }}>{error}</ThemedText>}
               {!loading && !error && tithes.length === 0 && <ThemedText>No tithes found.</ThemedText>}
               {!loading && !error && tithes.map((t) => (
-                <Transaction key={t.id} title="Tithe" date={new Date(t.datetime_created).toLocaleDateString()} amount={`$${t.amount}`} />
+                <Transaction key={t.id} title="Tithe" date={new Date(t.created_at).toLocaleDateString()} amount={`$${t.amount}`} />
               ))}
             </View>
           </Card>
