@@ -1,4 +1,3 @@
-// app/paymentMethod/[id].tsx
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { supabase } from '@/services/supabase';
@@ -15,6 +14,8 @@ import {
   ScrollView 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 export default function PaymentMethodScreen() {
   const { id } = useLocalSearchParams();
@@ -79,42 +80,11 @@ export default function PaymentMethodScreen() {
       }
 
       console.log('Payment Method ID:', paymentMethod.id);
+      console.log('BASE_URL:', BASE_URL);
+      console.log('Full URL:', `${BASE_URL}/api/payment-method/save`);
 
-      // 2. Get user's Stripe customer ID or create one
-      const { data: userData, error: userError } = await supabase
-        .from('user')
-        .select('stripe_customer_id, first_name, last_name')
-        .eq('id', userId)
-        .single();
-
-      if (userError) throw userError;
-
-      let stripeCustomerId = userData.stripe_customer_id;
-
-      // 3. If no Stripe customer, create one via backend
-      if (!stripeCustomerId) {
-        const response = await fetch('YOUR_BACKEND_URL/create-stripe-customer', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: userData.email,
-            name: `${userData.first_name} ${userData.last_name}`,
-            userId: userId
-          })
-        });
-
-        const customerData = await response.json();
-        stripeCustomerId = customerData.customerId;
-
-        // Update user with Stripe customer ID
-        await supabase
-          .from('user')
-          .update({ stripe_customer_id: stripeCustomerId })
-          .eq('id', userId);
-      }
-
-      // 4. Attach payment method to customer via backend
-      const attachResponse = await fetch('YOUR_BACKEND_URL/save-payment-method', {
+      // 2. Attach payment method to customer via backend
+      const attachResponse = await fetch(`${BASE_URL}/api/payment-method/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -165,7 +135,7 @@ export default function PaymentMethodScreen() {
       if (setError) throw setError;
 
       // Update in Stripe via backend
-      const response = await fetch('YOUR_BACKEND_URL/set-default-payment-method', {
+      const response = await fetch(`${BASE_URL}/api/payment-method/set-default`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -206,7 +176,7 @@ export default function PaymentMethodScreen() {
               setLoading(true);
 
               // Call backend to detach from Stripe
-              const response = await fetch('YOUR_BACKEND_URL/delete-payment-method', {
+              const response = await fetch(`${BASE_URL}/api/payment-method/delete`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

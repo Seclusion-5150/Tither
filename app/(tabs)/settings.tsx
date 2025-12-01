@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function SettingsScreen() {
   const [autoPay, setAutoPay] = useState(true);
@@ -32,6 +33,14 @@ export default function SettingsScreen() {
       fetchCards();
     }
   }, [userId]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userId) {
+        fetchCards();
+      }
+    }, [userId])
+  );
 
   const loadProfile = async () => {
     try {
@@ -170,7 +179,12 @@ export default function SettingsScreen() {
   const addPaymentMethod = () => {
 	router.push(`../paymentMethods/${userId}`);  	
   };
-
+  
+  const getCardBrandDisplay = (brand: string) => {
+    if (!brand) return 'Card';
+    return brand.charAt(0).toUpperCase() + brand.slice(1);
+  };
+  
   return (
     <ThemedView style={styles.safe}>
       <SafeAreaView style={{ flex: 1 }}>
