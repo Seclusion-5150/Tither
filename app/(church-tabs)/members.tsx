@@ -9,6 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 type Donor = {
   user_id: string;
+  name: string;
   totalAmount: number;
   transactionCount: number;
   lastDonation: string;
@@ -41,7 +42,7 @@ export default function Members() {
 
           if (tithes && mounted) {
             // Group by donor
-            const donorMap = new Map<string, Donor>();
+            const donorMap = new Map<string, Omit<Donor, 'name'>>();
             
             tithes.forEach((tithe) => {
               const existing = donorMap.get(tithe.user_id);
@@ -61,9 +62,31 @@ export default function Members() {
               }
             });
 
-            const donorList = Array.from(donorMap.values()).sort(
-              (a, b) => b.totalAmount - a.totalAmount
-            );
+            // Fetch user details from user table
+            const userIds = Array.from(donorMap.keys());
+            
+            const { data: userProfiles } = await supabase
+              .from('user')
+              .select('id, first_name, last_name')
+              .in('id', userIds);
+
+            // Create a map of user names
+            const userNamesMap = new Map<string, string>();
+            
+            userProfiles?.forEach((profile) => {
+              const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+              userNamesMap.set(profile.id, name || 'Anonymous');
+            });
+
+            // Combine donor data with user names
+            const donorList: Donor[] = Array.from(donorMap.entries())
+              .map(([userId, donorData]) => {
+                return {
+                  ...donorData,
+                  name: userNamesMap.get(userId) || 'Anonymous',
+                };
+              })
+              .sort((a, b) => b.totalAmount - a.totalAmount);
 
             setDonors(donorList);
           }
@@ -83,7 +106,7 @@ export default function Members() {
   );
 
   const filteredDonors = donors.filter((donor) =>
-    donor.user_id.toLowerCase().includes(searchQuery.toLowerCase())
+    donor.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
@@ -107,7 +130,7 @@ export default function Members() {
 
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by ID..."
+            placeholder="Search by name..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#9CA3AF"
@@ -120,8 +143,8 @@ export default function Members() {
               filteredDonors.map((donor) => (
                 <View key={donor.user_id} style={styles.donorRow}>
                   <View style={styles.donorInfo}>
-                    <ThemedText style={styles.donorId}>
-                      {donor.user_id.substring(0, 8)}...
+                    <ThemedText style={styles.donorName}>
+                      {donor.name}
                     </ThemedText>
                     <ThemedText style={styles.donorMeta}>
                       {donor.transactionCount} donation{donor.transactionCount !== 1 ? 's' : ''} • 
@@ -175,7 +198,7 @@ const styles = StyleSheet.create({
   donorInfo: {
     flex: 1,
   },
-  donorId: {
+  donorName: {
     fontSize: 16,
     fontWeight: '600',
   },

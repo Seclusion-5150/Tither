@@ -10,7 +10,7 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://127.0.0.1:3000';
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.0.66:8081';
 console.log('API_BASE =', API_BASE); 
 
 function validateEINFormat(ein: string) {
@@ -91,16 +91,17 @@ export default function RegistrationScreen() {
       // 3) Insert church profile (without Stripe id yet)
       const cleanEin = ein.replace(/-/g, '');
       const { error: churchInsertError } = await supabase
-        .from('church')
-        .insert({
-          id: userId,
-          username,
-          ein: cleanEin,
-          name: churchName,
-          validated: false,
-          phone: phoneNumber,
-        });
-
+  	.from('church')
+  	.upsert({ 
+    	 id: userId,
+    	 username,
+    	 ein: cleanEin,
+    	 name: churchName,
+    	 validated: false,
+    	 phone: phoneNumber,
+      }, {
+    	onConflict: 'id' 
+      });
       if (churchInsertError) {
         console.log('Church insert error:', churchInsertError);
         Alert.alert('Error', 'Failed to save church record.');
