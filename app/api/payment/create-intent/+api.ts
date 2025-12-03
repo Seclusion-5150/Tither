@@ -2,14 +2,11 @@ import { getStripe } from '@/lib/server/stripe.server';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
-  console.log('💰 Creating payment intent...');
   
   try {
     const body = await request.json();
     const { amount, userId, churchId, paymentMethodId, notes } = body;
-    
-    console.log('📦 Request:', { amount, userId, churchId, paymentMethodId });
-    
+        
     const stripe = getStripe();
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +20,6 @@ export async function POST(request: Request) {
     );
 
     // Get user's stripe customer ID
-    console.log('👤 Fetching user...');
     const { data: { user: authUser } } = await supabase.auth.admin.getUserById(userId);
     
     if (!authUser) {
@@ -37,7 +33,6 @@ export async function POST(request: Request) {
     }
 
     // Create payment intent
-    console.log('💳 Creating payment intent for $', amount);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
       currency: 'usd',
@@ -54,8 +49,6 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log('✅ Payment intent created:', paymentIntent.id);
-    console.log('💾 Saving to tithes table...');
 
     // Record the tithe in your database
     const { data: insertData, error: insertError } = await supabase
@@ -76,8 +69,6 @@ export async function POST(request: Request) {
       throw insertError;
     }
 
-    console.log('✅ Tithe saved:', insertData);
-    console.log('🎉 Payment successful!');
     
     return Response.json({ 
       success: true,
@@ -87,7 +78,6 @@ export async function POST(request: Request) {
     });
     
   } catch (err: any) {
-    console.error('💥 Payment error:', err);
     return Response.json({ 
       success: false, 
       error: err?.message ?? 'Unknown error' 
