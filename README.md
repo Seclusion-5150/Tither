@@ -22,20 +22,20 @@ A modern mobile application that simplifies the process of giving tithes to chur
 
 ## Features
 
-### 🙏 For Church Members
+### For Church Members
 - **Flexible Tithe Payments**: Send tithes anytime, anywhere without physically being at church
 - **Multiple Church Support**: Manage and send tithes to multiple churches from a single account
 - **Secure Payment Processing**: Safe and encrypted payment transactions
 - **Payment History**: Track all your tithe contributions in one place
 
-### ⛪ For Churches
+### For Churches
 - **Simplified Collection**: Automated digital tithe collection system
 - **Tracking**: Monitor incoming tithes
 - **Member Management**: View and manage registered church members
 - **Financial Reports**: Generate comprehensive financial reports
 - **Reduced Administrative Burden**: Less manual handling of physical cash and checks
 
-### 🔍 Church Directory
+### Church Directory
 - **Browse Churches**: Discover churches in your area
 - **Search & Filter**: Find churches by denomination, location, or other criteria
 - **Church Profiles**: Detailed information about each church including service times, contact info, and mission statement
