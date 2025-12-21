@@ -42,7 +42,19 @@ A modern mobile application that simplifies the process of giving tithes to chur
 
 ## Screenshots
 
-> Add screenshots of your app here
+<img width="1290" height="2796" alt="image" src="https://github.com/user-attachments/assets/4ddb4a1f-d68f-461b-b671-c29ea671af1a" />
+
+<img width="1290" height="2796" alt="image" src="https://github.com/user-attachments/assets/f6dfc843-a667-4665-8239-5cf154d0cfc8" />
+
+<img width="1290" height="2796" alt="image" src="https://github.com/user-attachments/assets/a7df96f2-ad3d-4d05-8cd3-97f71274eb51" />
+
+<img width="1290" height="2796" alt="image" src="https://github.com/user-attachments/assets/405b55df-844d-47bf-8464-d3de8030f9ee" />
+
+<img width="1290" height="2796" alt="image" src="https://github.com/user-attachments/assets/d557ea23-907e-4800-8f16-1ee2ceb9635f" />
+
+<img width="1290" height="2796" alt="image" src="https://github.com/user-attachments/assets/1516d245-7cd8-4feb-ae6d-b5ee6270fd7e" />
+
+
 
 ## Tech Stack
 
